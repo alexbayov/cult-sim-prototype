@@ -1,8 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import './App.css'
+import { infoBusinessMarathonScenario } from './game/data'
 import { createInitialState, groupMetricLabels, participantMetricLabels, playCard } from './game/engine'
 import { clearSavedGame, getSaveVersion, loadSavedGame, saveGame } from './game/storage'
-import type { Card, GroupMetric, Participant, ParticipantMetric } from './game/types'
+import type { Card, DebriefTerm, GroupMetric, Participant, ParticipantMetric } from './game/types'
+
+const debriefIndex: Map<string, DebriefTerm> = new Map(
+  infoBusinessMarathonScenario.debriefTerms.map((term) => [term.tag, term]),
+)
 
 function App() {
   const [game, setGame] = useState(() => loadSavedGame() ?? createInitialState())
@@ -156,11 +161,17 @@ function App() {
             </div>
             <div>
               <h3>Теги разбора</h3>
-              <div className="tags">
-                {game.debriefTags.slice(0, 10).map((tag) => (
-                  <span key={tag}>{tag}</span>
-                ))}
-              </div>
+              <ul className="debrief-terms">
+                {game.debriefTags.slice(0, 10).map((tag) => {
+                  const term = debriefIndex.get(tag)
+                  return (
+                    <li key={tag}>
+                      <strong>{term?.title ?? tag}</strong>
+                      {term ? <p>{term.description}</p> : null}
+                    </li>
+                  )
+                })}
+              </ul>
             </div>
             <div>
               <h3>Что попало в дело</h3>

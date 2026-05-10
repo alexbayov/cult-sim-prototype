@@ -230,6 +230,48 @@ export const playCard = (state: GameState, cardId: string): GameState => {
 
 const average = (values: number[]) => values.reduce((sum, value) => sum + value, 0) / values.length
 
+const finaleFallback: Record<string, { title: string; summary: string }> = {
+  'closed-success-circle': {
+    title: 'Финал: закрытый круг успеха',
+    summary:
+      'Марафон вырос в плотное платное сообщество. Внешне — дисциплина, деньги и сильное окружение; внутри — зависимость от ритма, статуса и доступа к лидеру.',
+  },
+  'public-breakdown': {
+    title: 'Финал: публичный разбор',
+    summary:
+      'Скриншоты, вопросы близких и усталость участников стали видимыми. Группа ещё может защищаться, но теперь её методы разбирают снаружи.',
+  },
+  'expensive-breakthrough': {
+    title: 'Финал: дорогой прорыв',
+    summary:
+      'Система показала результат по деньгам и вовлечению, но часть участников вышла из партии с долгами, истощением и ощущением личной неисправности.',
+  },
+  'own-language-own-circle': {
+    title: 'Финал: свой язык, свой круг',
+    summary:
+      'Проект стал закрытым сообществом с собственной рамкой объяснений. Снаружи это всё ещё марафон, но внутри уже важнее лояльность и принадлежность.',
+  },
+  'soft-collapse': {
+    title: 'Финал: мягкий распад',
+    summary:
+      'Поток не стал устойчивой системой. Участники забрали часть пользы, часть обещаний рассыпалась, а красные флаги остались материалом для разбора.',
+  },
+}
+
+const buildFinale = (id: string, score: number, redFlags: string[]): Finale => {
+  const fromContent = infoBusinessMarathonScenario.finales.find((entry) => entry.id === id)
+  const fallback = finaleFallback[id]
+  const title = fromContent?.title ?? fallback?.title ?? id
+  const summary = fromContent?.summary ?? fallback?.summary ?? ''
+  return {
+    id,
+    title,
+    summary,
+    score,
+    notes: redFlags.slice(0, 5),
+  }
+}
+
 const calculateFinale = (
   group: GroupState,
   participantList: Participant[],
@@ -243,50 +285,20 @@ const calculateFinale = (
   const visibilityRisk = Math.round((group.visibility + group.resistance + group.doubt) / 3)
 
   if (systemPower >= 55 && humanCost >= 45 && visibilityRisk < 48) {
-    return {
-      title: 'Финал: закрытый круг успеха',
-      summary:
-        'Марафон вырос в плотное платное сообщество. Внешне — дисциплина, деньги и сильное окружение; внутри — зависимость от ритма, статуса и доступа к лидеру.',
-      score: systemPower - Math.round(humanCost / 3),
-      notes: redFlags.slice(0, 5),
-    }
+    return buildFinale('closed-success-circle', systemPower - Math.round(humanCost / 3), redFlags)
   }
 
   if (visibilityRisk >= 55) {
-    return {
-      title: 'Финал: публичный разбор',
-      summary:
-        'Скриншоты, вопросы близких и усталость участников стали видимыми. Группа ещё может защищаться, но теперь её методы разбирают снаружи.',
-      score: 100 - visibilityRisk,
-      notes: redFlags.slice(0, 5),
-    }
+    return buildFinale('public-breakdown', 100 - visibilityRisk, redFlags)
   }
 
   if (humanCost >= 55) {
-    return {
-      title: 'Финал: дорогой прорыв',
-      summary:
-        'Система показала результат по деньгам и вовлечению, но часть участников вышла из партии с долгами, истощением и ощущением личной неисправности.',
-      score: systemPower - humanCost,
-      notes: redFlags.slice(0, 5),
-    }
+    return buildFinale('expensive-breakthrough', systemPower - humanCost, redFlags)
   }
 
   if (group.radicalization >= 45) {
-    return {
-      title: 'Финал: свой язык, свой круг',
-      summary:
-        'Проект стал закрытым сообществом с собственной рамкой объяснений. Снаружи это всё ещё марафон, но внутри уже важнее лояльность и принадлежность.',
-      score: systemPower - visibilityRisk,
-      notes: redFlags.slice(0, 5),
-    }
+    return buildFinale('own-language-own-circle', systemPower - visibilityRisk, redFlags)
   }
 
-  return {
-    title: 'Финал: мягкий распад',
-    summary:
-      'Поток не стал устойчивой системой. Участники забрали часть пользы, часть обещаний рассыпалась, а красные флаги остались материалом для разбора.',
-    score: Math.round((averageAutonomy + 100 - group.harm) / 2),
-    notes: redFlags.slice(0, 5),
-  }
+  return buildFinale('soft-collapse', Math.round((averageAutonomy + 100 - group.harm) / 2), redFlags)
 }

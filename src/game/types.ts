@@ -95,8 +95,21 @@ export type GameState = {
 }
 
 export type Finale = {
+  id: string
   title: string
   summary: string
   score: number
   notes: string[]
+}
+
+export type FinaleDefinition = {
+  id: string
+  title: string
+  summary: string
+}
+
+export type DebriefTerm = {
+  tag: string
+  title: string
+  description: string
 }

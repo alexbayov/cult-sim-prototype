@@ -126,6 +126,8 @@ src/game/scenarios/info-business-marathon/
   participants.json
   cards.json
   combos.json
+  finales.json
+  debrief.json
 src/game/data.ts
 src/game/engine.ts
 src/game/storage.ts
@@ -167,12 +169,13 @@ docs/tables/*.csv
 
 PR-кандидаты:
 
-1. Split scenario JSON — сделано в ветке `devin/split-scenario-json`:
-   - `src/game/scenarios/info-business-marathon/scenario.json`
-   - `src/game/scenarios/info-business-marathon/participants.json`
-   - `src/game/scenarios/info-business-marathon/cards.json`
-   - `src/game/scenarios/info-business-marathon/combos.json`
-2. Add finale data to JSON (`finales.json` рядом с остальными).
+1. Split scenario JSON — сделано (PR #6, ветка `devin/split-scenario-json`).
+2. Finale/debrief data — сделано в ветке `devin/finale-debrief-data`:
+   - `finales.json` с 5 существующими финалами;
+   - `debrief.json` с educational-описанием всех текущих debrief-тегов;
+   - типы `FinaleDefinition` и `DebriefTerm`, расширенный `ScenarioContent` + validator;
+   - `engine.ts` берёт title/summary финалов из JSON по id, пороги и score-формулы не меняет;
+   - финальный экран показывает human title + description вместо raw tags, с fallback на сырой tag.
 3. Add content validation script.
 
 ### Раунд 2 — playable loop v2

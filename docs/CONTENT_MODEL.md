@@ -33,11 +33,35 @@ src/game/scenarios/info-business-marathon/
   participants.json   # массив участников
   cards.json          # массив карт
   combos.json         # массив combo rules
+  finales.json        # финалы: id, title, summary
+  debrief.json        # словарь debrief-терминов: tag, title, description
 ```
 
-`src/game/data.ts` импортирует все четыре файла и собирает из них `ScenarioContent`. Наружу по-прежнему экспортируется единственный объект `infoBusinessMarathonScenario: ScenarioContent`, поэтому `engine.ts` и UI ничего не знают о том, что контент лежит в нескольких файлах.
+`src/game/data.ts` импортирует все шесть файлов и собирает из них `ScenarioContent`. Наружу по-прежнему экспортируется единственный объект `infoBusinessMarathonScenario: ScenarioContent`, поэтому `engine.ts` и UI не знают о split-файлах.
 
-Когда появятся финалы и debrief-словарь, добавим рядом `finales.json` (и при необходимости `debrief.json`) и подключим их в `data.ts` так же, как остальные секции.
+## Финалы
+
+Пороги и score-формулы финалов по-прежнему живут в `src/game/engine.ts` (`calculateFinale`). Тексты — в `finales.json`. Движок выбирает финал по порогам и берёт `title`/`summary` из JSON по `id`. Если id в JSON нет — hardcoded fallback в `engine.ts` не даёт UI показать пустые поля.
+
+Пять базовых финалов:
+
+- `closed-success-circle` — закрытый круг успеха;
+- `public-breakdown` — публичный разбор;
+- `expensive-breakthrough` — дорогой прорыв;
+- `own-language-own-circle` — свой язык, свой круг;
+- `soft-collapse` — мягкий распад.
+
+Чтобы добавить новый финал: нужны id в `finales.json`, новый блок в `calculateFinale` с порогом/score-формулой и по возможности fallback-запись в `finaleFallback`.
+
+## Debrief термины
+
+`debrief.json` — образовательный словарь к `debriefTags`, которые указаны в картах и комбо. Поля:
+
+- `tag` — точное совпадение со строкой в `debriefTags`;
+- `title` — короткое русскоязычное название явления;
+- `description` — нейтральный, не морализаторский образовательный текст 1–2 предложения.
+
+Финальный экран берёт термин из этого словаря по `tag`, и если термин найден — показывает `title` + `description`. Если термин ещё не описан — fallback на raw tag, игра не ломается.
 
 ## Участник
 
@@ -214,7 +238,9 @@ src/game/scenarios/info-business-marathon/
 - новая или изменённая карта → `cards.json`;
 - участник или его метрики → `participants.json`;
 - комбо-правило → `combos.json`;
-- стартовые метрики группы, заголовок и premise → `scenario.json`.
+- стартовые метрики группы, заголовок и premise → `scenario.json`;
+- title/summary финала → `finales.json` (пороги и score-формулы — в `engine.ts`);
+- образовательное описание термина → `debrief.json`.
 
 После любых правок контента:
 
