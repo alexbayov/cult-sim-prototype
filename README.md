@@ -51,6 +51,7 @@ src/App.css         # визуальный слой
 - [Metrics](docs/METRICS.md) — игровые, продуктовые и контентные метрики.
 - [Content model](docs/CONTENT_MODEL.md) — правила карт, участников, комбо и финалов.
 - [Art direction](docs/ART_DIRECTION.md) — визуальный стиль, ассеты и prompt-шаблоны.
+- [Orchestration](docs/ORCHESTRATION.md) — как вести проект через дирижёра и параллельных Devin-девов.
 
 Рабочие таблицы:
 
