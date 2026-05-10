@@ -1,4 +1,5 @@
 import type { Card, ComboRule, GroupState, Participant } from './types'
+import type { ScenarioContent } from './contentSchema'
 
 const baseParticipantMetrics = {
   trust: 24,
@@ -439,3 +440,14 @@ export const comboRules: ComboRule[] = [
     debriefTags: ['isolation', 'protective ties'],
   },
 ]
+
+export const infoBusinessMarathonScenario: ScenarioContent = {
+  id: 'info-business-marathon',
+  title: 'Марафон личной эффективности',
+  premise:
+    'Бесплатный марафон обещает новый старт, сильное окружение и быстрый выход из хаоса. Игрок наблюдает, как обычные практики складываются в систему влияния.',
+  initialGroup,
+  participants,
+  cards,
+  comboRules,
+}

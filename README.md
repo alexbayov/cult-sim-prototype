@@ -50,6 +50,7 @@ src/App.css         # визуальный слой
 - [Agent brief](docs/AGENT_BRIEF.md) — что должен помнить следующий агент.
 - [Metrics](docs/METRICS.md) — игровые, продуктовые и контентные метрики.
 - [Content model](docs/CONTENT_MODEL.md) — правила карт, участников, комбо и финалов.
+- [Art direction](docs/ART_DIRECTION.md) — визуальный стиль, ассеты и prompt-шаблоны.
 
 Рабочие таблицы:
 
@@ -58,6 +59,7 @@ src/App.css         # визуальный слой
 - [Combo rules](docs/tables/combo_rules.csv)
 - [Finale matrix](docs/tables/finale_matrix.csv)
 - [Analytics events](docs/tables/analytics_events.csv)
+- [Asset manifest](docs/tables/asset_manifest.csv)
 
 ## Ближайший фокус
 
