@@ -33,13 +33,14 @@ npm run lint
 
 ```txt
 src/game/types.ts   # типы карт, участников, эффектов и состояния игры
-src/game/data.ts    # стартовые участники, карты и комбо
+src/game/data.ts    # загрузчик текущего сценария
+src/game/scenarios/ # JSON-контент сценариев
 src/game/engine.ts  # применение карт, комбо и расчёт финала
 src/App.tsx         # интерфейс доски
 src/App.css         # визуальный слой
 ```
 
-Контент специально вынесен в `src/game/data.ts`, чтобы дальше добавлять новые карты, сценарии и кейсы без переписывания интерфейса.
+Контент специально вынесен в JSON в `src/game/scenarios/`, чтобы дальше добавлять новые карты, сценарии и кейсы без переписывания интерфейса.
 
 ## Studio docs
 
@@ -52,6 +53,7 @@ src/App.css         # визуальный слой
 - [Content model](docs/CONTENT_MODEL.md) — правила карт, участников, комбо и финалов.
 - [Art direction](docs/ART_DIRECTION.md) — визуальный стиль, ассеты и prompt-шаблоны.
 - [Orchestration](docs/ORCHESTRATION.md) — как вести проект через дирижёра и параллельных Devin-девов.
+- [Conductor handoff](docs/CONDUCTOR_HANDOFF.md) — полный контекст, стратегия, текущие PR и brief-заготовки для следующих сессий.
 
 Рабочие таблицы:
 

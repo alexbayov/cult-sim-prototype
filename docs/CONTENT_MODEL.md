@@ -25,8 +25,21 @@
 - словарь/разбор.
 
 В коде сценарий описывается типом `ScenarioContent` в `src/game/contentSchema.ts`.
-Текущий стартовый сценарий экспортируется как `infoBusinessMarathonScenario`.
-Это промежуточный шаг к полноценному JSON-контенту: сначала мы стабилизируем схему и validation, затем вынесем данные из TypeScript в JSON-файлы.
+Текущий стартовый сценарий лежит в `src/game/scenarios/info-business-marathon.json`.
+`src/game/data.ts` сейчас только импортирует JSON и приводит его к `ScenarioContent`.
+
+Следующий шаг после JSON migration — дробить большой файл сценария на отдельные JSON-файлы:
+
+```txt
+src/game/scenarios/info-business-marathon/
+  scenario.json
+  participants.json
+  cards.json
+  combos.json
+  finales.json
+```
+
+Пока один JSON удобнее, потому что движок ещё активно меняется.
 
 ## Участник
 
@@ -195,3 +208,16 @@
 - Нет инструктивных деталей?
 - Карта интересна как игровой выбор?
 - Карта может участвовать хотя бы в одном комбо?
+
+## JSON editing rule
+
+Контентные правки теперь вносить в `src/game/scenarios/*.json`, а не в `src/game/data.ts`.
+
+После любых правок контента:
+
+```bash
+npm run build
+npm run lint
+```
+
+Если build падает из-за schema mismatch, сначала исправить JSON, а не обходить validation.
