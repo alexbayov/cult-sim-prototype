@@ -1,0 +1,134 @@
+[
+  {
+    "id": "anya",
+    "name": "Аня",
+    "archetype": "выгоревшая офисная сотрудница",
+    "need": "поддержка и новый смысл",
+    "vulnerability": "выгорание и одиночество после переезда",
+    "protection": "подруга вне группы",
+    "protectionLevel": 42,
+    "vulnerabilityLevel": 68,
+    "metrics": {
+      "trust": 34,
+      "autonomy": 56,
+      "dependence": 8,
+      "doubt": 18,
+      "fatigue": 34,
+      "shame": 8,
+      "fear": 4,
+      "financialPressure": 10,
+      "exitReadiness": 18,
+      "recruitReadiness": 8
+    }
+  },
+  {
+    "id": "ilya",
+    "name": "Илья",
+    "archetype": "начинающий предприниматель",
+    "need": "быстрый рост дохода",
+    "vulnerability": "долги и страх провала",
+    "protection": "прагматичность и опыт продаж",
+    "protectionLevel": 48,
+    "vulnerabilityLevel": 72,
+    "metrics": {
+      "trust": 28,
+      "autonomy": 68,
+      "dependence": 8,
+      "doubt": 18,
+      "fatigue": 12,
+      "shame": 8,
+      "fear": 4,
+      "financialPressure": 38,
+      "exitReadiness": 18,
+      "recruitReadiness": 8
+    }
+  },
+  {
+    "id": "marina",
+    "name": "Марина",
+    "archetype": "участница после развода",
+    "need": "принятие и стабильная опора",
+    "vulnerability": "разрыв отношений и чувство вины",
+    "protection": "психотерапия в прошлом",
+    "protectionLevel": 56,
+    "vulnerabilityLevel": 64,
+    "metrics": {
+      "trust": 30,
+      "autonomy": 68,
+      "dependence": 8,
+      "doubt": 18,
+      "fatigue": 12,
+      "shame": 24,
+      "fear": 4,
+      "financialPressure": 10,
+      "exitReadiness": 18,
+      "recruitReadiness": 8
+    }
+  },
+  {
+    "id": "danya",
+    "name": "Даня",
+    "archetype": "студент",
+    "need": "статус и сильное окружение",
+    "vulnerability": "неустойчивая идентичность",
+    "protection": "живой контакт с друзьями",
+    "protectionLevel": 38,
+    "vulnerabilityLevel": 58,
+    "metrics": {
+      "trust": 24,
+      "autonomy": 62,
+      "dependence": 8,
+      "doubt": 18,
+      "fatigue": 12,
+      "shame": 8,
+      "fear": 4,
+      "financialPressure": 10,
+      "exitReadiness": 18,
+      "recruitReadiness": 18
+    }
+  },
+  {
+    "id": "sveta",
+    "name": "Света",
+    "archetype": "опытная участница марафонов",
+    "need": "проверить очередную методику",
+    "vulnerability": "усталость от постоянного поиска решения",
+    "protection": "уже обжигалась на похожих продуктах",
+    "protectionLevel": 78,
+    "vulnerabilityLevel": 36,
+    "metrics": {
+      "trust": 16,
+      "autonomy": 68,
+      "dependence": 8,
+      "doubt": 36,
+      "fatigue": 12,
+      "shame": 8,
+      "fear": 4,
+      "financialPressure": 10,
+      "exitReadiness": 32,
+      "recruitReadiness": 8
+    }
+  },
+  {
+    "id": "oleg",
+    "name": "Олег",
+    "archetype": "скептик из любопытства",
+    "need": "понять, что там происходит",
+    "vulnerability": "азарт разоблачителя",
+    "protection": "критическое мышление и внешняя занятость",
+    "protectionLevel": 86,
+    "vulnerabilityLevel": 22,
+    "metrics": {
+      "trust": 12,
+      "autonomy": 82,
+      "dependence": 8,
+      "doubt": 42,
+      "fatigue": 12,
+      "shame": 8,
+      "fear": 4,
+      "financialPressure": 10,
+      "exitReadiness": 18,
+      "recruitReadiness": 8
+    }
+  }
+]

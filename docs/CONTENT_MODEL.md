@@ -25,21 +25,19 @@
 - словарь/разбор.
 
 В коде сценарий описывается типом `ScenarioContent` в `src/game/contentSchema.ts`.
-Текущий стартовый сценарий лежит в `src/game/scenarios/info-business-marathon.json`.
-`src/game/data.ts` сейчас только импортирует JSON и приводит его к `ScenarioContent`.
-
-Следующий шаг после JSON migration — дробить большой файл сценария на отдельные JSON-файлы:
+Текущий стартовый сценарий разложен по отдельным JSON-файлам в папке `src/game/scenarios/info-business-marathon/`:
 
 ```txt
 src/game/scenarios/info-business-marathon/
-  scenario.json
-  participants.json
-  cards.json
-  combos.json
-  finales.json
+  scenario.json       # id, title, premise, initialGroup
+  participants.json   # массив участников
+  cards.json          # массив карт
+  combos.json         # массив combo rules
 ```
 
-Пока один JSON удобнее, потому что движок ещё активно меняется.
+`src/game/data.ts` импортирует все четыре файла и собирает из них `ScenarioContent`. Наружу по-прежнему экспортируется единственный объект `infoBusinessMarathonScenario: ScenarioContent`, поэтому `engine.ts` и UI ничего не знают о том, что контент лежит в нескольких файлах.
+
+Когда появятся финалы и debrief-словарь, добавим рядом `finales.json` (и при необходимости `debrief.json`) и подключим их в `data.ts` так же, как остальные секции.
 
 ## Участник
 
@@ -211,7 +209,12 @@ src/game/scenarios/info-business-marathon/
 
 ## JSON editing rule
 
-Контентные правки теперь вносить в `src/game/scenarios/*.json`, а не в `src/game/data.ts`.
+Контентные правки вносить в JSON-файлы внутри `src/game/scenarios/info-business-marathon/`, а не в `src/game/data.ts` или `src/game/engine.ts`:
+
+- новая или изменённая карта → `cards.json`;
+- участник или его метрики → `participants.json`;
+- комбо-правило → `combos.json`;
+- стартовые метрики группы, заголовок и premise → `scenario.json`.
 
 После любых правок контента:
 
