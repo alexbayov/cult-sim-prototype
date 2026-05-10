@@ -121,7 +121,11 @@
 ```txt
 src/game/types.ts
 src/game/contentSchema.ts
-src/game/scenarios/info-business-marathon.json
+src/game/scenarios/info-business-marathon/
+  scenario.json
+  participants.json
+  cards.json
+  combos.json
 src/game/data.ts
 src/game/engine.ts
 src/game/storage.ts
@@ -163,13 +167,12 @@ docs/tables/*.csv
 
 PR-кандидаты:
 
-1. Split scenario JSON:
-   - `scenario.json`
-   - `participants.json`
-   - `cards.json`
-   - `combos.json`
-   - `finales.json`
-2. Add finale data to JSON.
+1. Split scenario JSON — сделано в ветке `devin/split-scenario-json`:
+   - `src/game/scenarios/info-business-marathon/scenario.json`
+   - `src/game/scenarios/info-business-marathon/participants.json`
+   - `src/game/scenarios/info-business-marathon/cards.json`
+   - `src/game/scenarios/info-business-marathon/combos.json`
+2. Add finale data to JSON (`finales.json` рядом с остальными).
 3. Add content validation script.
 
 ### Раунд 2 — playable loop v2
@@ -274,39 +277,11 @@ PR-кандидаты:
 
 ## Готовые brief-заготовки
 
-### Dev 1 — Split JSON scenario files
+### Dev 1 — Split JSON scenario files — сделано
 
-Repo: `https://github.com/alexbayov/cult-sim-prototype`
+Ветка: `devin/split-scenario-json`. Сценарий разложен по отдельным файлам в `src/game/scenarios/info-business-marathon/`. Наружу движок по-прежнему видит единственный `infoBusinessMarathonScenario: ScenarioContent` из `src/game/data.ts`.
 
-Branch: `devin/split-scenario-json`
-
-Контекст:
-
-Сейчас весь сценарий в одном `info-business-marathon.json`. Это лучше, чем TS-контент, но дальше неудобно редактировать карты и участников.
-
-Что менять:
-
-- создать папку `src/game/scenarios/info-business-marathon/`;
-- вынести:
-  - `scenario.json`
-  - `participants.json`
-  - `cards.json`
-  - `combos.json`
-  - `finales.json` если финалы уже будут готовы;
-- обновить loader;
-- не менять gameplay.
-
-Acceptance criteria:
-
-- игра стартует как раньше;
-- build/lint проходят;
-- добавление карты происходит в `cards.json`.
-
-Что НЕ делать:
-
-- не менять UI;
-- не добавлять новые механики;
-- не переписывать engine.
+Дальше по этой линии остались finales/debrief-словарь (отдельными PR-ами) и content validation script.
 
 ### Dev 2 — Mobile-first layout
 

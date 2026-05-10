@@ -1,0 +1,17 @@
+{
+  "id": "info-business-marathon",
+  "title": "Марафон личной эффективности",
+  "premise": "Бесплатный марафон обещает новый старт, сильное окружение и быстрый выход из хаоса. Игрок наблюдает, как обычные практики складываются в систему влияния.",
+  "initialGroup": {
+    "involvement": 18,
+    "trust": 24,
+    "money": 12,
+    "legitimacy": 30,
+    "harm": 4,
+    "doubt": 12,
+    "visibility": 10,
+    "leaderControl": 14,
+    "radicalization": 2,
+    "resistance": 8
+  }
+}

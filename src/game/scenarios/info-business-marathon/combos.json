@@ -1,0 +1,199 @@
+[
+  {
+    "id": "warm-funnel",
+    "title": "Тёплая воронка доверия",
+    "requiredTags": [
+      "belonging",
+      "leader_aura",
+      "money"
+    ],
+    "windowTurns": 4,
+    "effects": [
+      {
+        "scope": "group",
+        "metric": "trust",
+        "delta": 7
+      },
+      {
+        "scope": "group",
+        "metric": "money",
+        "delta": 8
+      },
+      {
+        "scope": "participant",
+        "metric": "dependence",
+        "delta": 7,
+        "selector": "vulnerable"
+      },
+      {
+        "scope": "participant",
+        "metric": "autonomy",
+        "delta": -5,
+        "selector": "lowProtection"
+      }
+    ],
+    "redFlag": "поддержка и вдохновение незаметно становятся воронкой к платному доступу",
+    "debriefTags": [
+      "love bombing",
+      "scarcity",
+      "sunk cost"
+    ]
+  },
+  {
+    "id": "pace-pressure",
+    "title": "Ритм важнее состояния",
+    "requiredTags": [
+      "daily_task",
+      "public_commitment",
+      "shame"
+    ],
+    "windowTurns": 5,
+    "effects": [
+      {
+        "scope": "group",
+        "metric": "involvement",
+        "delta": 8
+      },
+      {
+        "scope": "group",
+        "metric": "harm",
+        "delta": 7
+      },
+      {
+        "scope": "participant",
+        "metric": "fatigue",
+        "delta": 9,
+        "selector": "all"
+      },
+      {
+        "scope": "participant",
+        "metric": "exitReadiness",
+        "delta": 6,
+        "selector": "highDoubt"
+      }
+    ],
+    "redFlag": "личный темп участника подменяется темпом потока",
+    "debriefTags": [
+      "behavior control",
+      "shame induction"
+    ]
+  },
+  {
+    "id": "sealed-language",
+    "title": "Закрытая рамка объяснений",
+    "requiredTags": [
+      "language_frame",
+      "information_control",
+      "leader_aura"
+    ],
+    "windowTurns": 4,
+    "effects": [
+      {
+        "scope": "group",
+        "metric": "leaderControl",
+        "delta": 12
+      },
+      {
+        "scope": "group",
+        "metric": "radicalization",
+        "delta": 6
+      },
+      {
+        "scope": "participant",
+        "metric": "doubt",
+        "delta": -6,
+        "selector": "lowProtection"
+      },
+      {
+        "scope": "participant",
+        "metric": "fear",
+        "delta": 4,
+        "selector": "vulnerable"
+      }
+    ],
+    "redFlag": "группа заранее объясняет, почему критика и сомнения не считаются аргументом",
+    "debriefTags": [
+      "bounded choice",
+      "loaded language",
+      "information control"
+    ]
+  },
+  {
+    "id": "cost-of-exit",
+    "title": "Цена выхода",
+    "requiredTags": [
+      "money",
+      "status",
+      "exit_cost"
+    ],
+    "windowTurns": 5,
+    "effects": [
+      {
+        "scope": "group",
+        "metric": "money",
+        "delta": 6
+      },
+      {
+        "scope": "participant",
+        "metric": "financialPressure",
+        "delta": 8,
+        "selector": "vulnerable"
+      },
+      {
+        "scope": "participant",
+        "metric": "shame",
+        "delta": 6,
+        "selector": "highTrust"
+      },
+      {
+        "scope": "participant",
+        "metric": "exitReadiness",
+        "delta": -5,
+        "selector": "highTrust"
+      }
+    ],
+    "redFlag": "участник остаётся не только из веры, но и потому что уже слишком много вложил",
+    "debriefTags": [
+      "sunk cost",
+      "coercive control"
+    ]
+  },
+  {
+    "id": "outside-vs-inside",
+    "title": "Снаружи не поймут",
+    "requiredTags": [
+      "isolation",
+      "us_vs_them",
+      "outside_contact"
+    ],
+    "windowTurns": 4,
+    "effects": [
+      {
+        "scope": "group",
+        "metric": "visibility",
+        "delta": 8
+      },
+      {
+        "scope": "group",
+        "metric": "resistance",
+        "delta": 7
+      },
+      {
+        "scope": "group",
+        "metric": "radicalization",
+        "delta": 5
+      },
+      {
+        "scope": "participant",
+        "metric": "doubt",
+        "delta": 8,
+        "selector": "highDoubt"
+      }
+    ],
+    "redFlag": "попытка ограничить внешние связи делает группу заметнее для близких",
+    "debriefTags": [
+      "isolation",
+      "protective ties"
+    ]
+  }
+]
