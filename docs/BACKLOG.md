@@ -58,9 +58,10 @@
 
 Что сделать:
 
-- вынести cards, participants, combos, finales в JSON;
+- вынести cards, participants и combos в JSON;
 - добавить runtime validation или простую проверку структуры;
-- оставить типы в TS.
+- оставить типы в TS;
+- следующим шагом раздробить сценарий на `participants.json`, `cards.json`, `combos.json`, `finales.json`.
 
 Готово, когда:
 
