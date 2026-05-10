@@ -1,5 +1,93 @@
 # Content model
 
+> **Статус:** проект pivot’ится с карточного симулятора на cult investigation / dossier game.
+>
+> - Новая модель — **investigation content** (case → persons → sources → evidence fragments → patterns → report → debrief) — лежит в `src/game/investigation/` и `src/game/cases/<case-id>/`.
+> - Старая модель — карточный сценарий (`src/game/types.ts`, `src/game/contentSchema.ts`, `src/game/scenarios/...`) — пока остаётся как **legacy/prototype**. Не удаляется, но новые фичи на ней не строятся.
+>
+> Этот документ описывает обе модели: сначала investigation (актуальная), затем legacy.
+
+## Investigation content (актуальная модель)
+
+### Структура
+
+```txt
+src/game/investigation/
+  types.ts              # TypeScript-типы (InvestigationCase, CasePerson, ...)
+  contentSchema.ts      # рантайм-валидатор + InvestigationContentError
+  data.ts               # сборка кейса из JSON + лог валидации при импорте
+
+src/game/cases/info-business-marathon/
+  case.json             # один объект InvestigationCase
+  persons.json          # массив CasePerson
+  sources.json          # массив CaseSource
+  evidence.json         # массив EvidenceFragment
+  patterns.json         # массив ControlPattern
+  report.json           # ReportContent: thresholds + outcomes + sections
+  debrief.json          # массив DebriefEntry (глоссарий с примерами)
+```
+
+`src/game/investigation/data.ts` импортирует все семь JSON и собирает единый `InvestigationContent`. При импорте вызывается `validateInvestigationContent` и любые ошибки уходят в `console.error`. Для строгой проверки (с исключением) есть `assertValidInvestigationContent`.
+
+Дополнительно есть `scripts/validate-investigation.mjs` — node-скрипт, который запускает ту же логику без React/Vite. Запуск:
+
+```bash
+npm run validate:investigation
+```
+
+### Ключевые сущности
+
+| Сущность | Что описывает | Кросс-ссылки |
+|---|---|---|
+| `InvestigationCase` | Дело: публичная легенда, вопрос расследования, риск, стартовые источники/люди. | `initialSourceIds → CaseSource`, `initialPersonIds → CasePerson` |
+| `CasePerson` | Профиль участника дела (роль, факты, метки риска/влияния/достоверности). | `sourceIds → CaseSource` |
+| `CaseSource` | Источник материала (лендинг, чат, свидетельство, платёжный мемо и т.д.). | `unlockedByEvidenceIds → EvidenceFragment` |
+| `EvidenceFragment` | Атомарный фрагмент из источника: цитата, ссылка, метки риска, вес. | `sourceId → CaseSource`, `linksToPersonIds → CasePerson`, `suggestedPatternIds → ControlPattern`, `unlocksSourceIds → CaseSource` |
+| `ControlPattern` | Паттерн (изоляция, финансовое давление и т.д.) с сильными/слабыми/контр-доказательствами. | `strongEvidenceIds / weakEvidenceIds / counterEvidenceIds → EvidenceFragment` |
+| `ReportContent` | Финальный отчёт: thresholds, outcomes (исходы), список секций. | `outcomes[].requiredPatternIds / forbiddenPatternIds → ControlPattern` |
+| `DebriefEntry` | Образовательная справка по паттерну (термин, объяснение, защитные факторы, примеры). | `exampleEvidenceIds → EvidenceFragment` |
+
+### Текущий сид: `info-business-marathon`
+
+- 1 case (`Марафон личной эффективности`).
+- 6 persons: leader, admin, vulnerable participant, ex-member, donor, relative.
+- 8 sources: landing, открытый чат, закрытый чат, свидетельство ex-member, платёжный мемо, видеотранскрипт, сообщение родственника, внутренний чек-лист.
+- 26 evidence fragments (включая два red herring — `e_landing_results`, `e_video_general_promise`).
+- 12 patterns (10 механизмов контроля + 2 защитных — protective_ties, reality_testing).
+- 4 report outcomes (`ro_insufficient`, `ro_warning`, `ro_system_proven`, `ro_misread`).
+- 12 debrief entries — по одной на каждый паттерн.
+
+Source unlocks образуют цепочку: `e_landing_special_path → s_testimony_ex`; `e_chat_second_circle_hint → s_chat_closed`; `e_ex_financial_pressure → s_payment_memo`; `e_payment_pressure_script → s_internal_checklist`.
+
+### Правила редактирования контента
+
+Все правки — в JSON-файлах внутри `src/game/cases/<case-id>/`:
+
+- новая улика → `evidence.json` с корректными `sourceId / linksToPersonIds / suggestedPatternIds`;
+- новый паттерн → `patterns.json`, плюс при необходимости — `debrief.json`;
+- новый источник → `sources.json`, плюс хотя бы одна evidence-цитата;
+- изменение исхода — `report.json`.
+
+После любых правок:
+
+```bash
+npm run validate:investigation
+npm run build
+npm run lint
+```
+
+Запрещается:
+
+- `Record<string, unknown>` и `any` в core-данных;
+- хардкод реальных организаций, контактов, логотипов;
+- инструктивные детали («как вербовать», «как удерживать»).
+
+---
+
+## Legacy: карточный сценарий
+
+> Этот раздел оставлен как справка по `src/game/scenarios/...`. Старый карточный движок продолжает собираться, но новые фичи на нём не строятся. Удаление — после переноса UI на dossier-модель.
+
 Контент должен быть модульным: новые сценарии, карты, участники, комбо и финалы добавляются как данные.
 
 ## Сценарий
