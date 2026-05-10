@@ -1,0 +1,82 @@
+[
+  {
+    "id": "s_landing",
+    "type": "landing",
+    "title": "Лендинг марафона",
+    "date": "2025-08-01",
+    "origin": "Публичная страница марафона. Скриншот из открытого доступа.",
+    "reliability": 60,
+    "unlockedByEvidenceIds": []
+  },
+  {
+    "id": "s_chat_open",
+    "type": "chat",
+    "title": "Открытый чат «1-я волна»",
+    "date": "2025-08-05",
+    "origin": "Открытый чат участников первой недели. Доступ по приглашению с лендинга.",
+    "reliability": 65,
+    "unlockedByEvidenceIds": []
+  },
+  {
+    "id": "s_video_intro",
+    "type": "videoTranscript",
+    "title": "Транскрипт вступительного эфира",
+    "date": "2025-08-04",
+    "origin": "Запись открытого эфира лидера. Текстовая расшифровка волонтёра.",
+    "reliability": 70,
+    "unlockedByEvidenceIds": []
+  },
+  {
+    "id": "s_relative_msg",
+    "type": "testimony",
+    "title": "Сообщение от брата участницы",
+    "date": "2025-09-02",
+    "origin": "Письмо в редакцию от Олега Т., брата участницы Марины. Прямой источник, но косвенные наблюдения.",
+    "reliability": 75,
+    "unlockedByEvidenceIds": []
+  },
+  {
+    "id": "s_testimony_ex",
+    "type": "testimony",
+    "title": "Свидетельство бывшего участника",
+    "date": "2025-09-10",
+    "origin": "Письменное свидетельство Дениса К., вышел на четвёртой неделе. Передано журналисту.",
+    "reliability": 80,
+    "unlockedByEvidenceIds": [
+      "e_landing_special_path"
+    ]
+  },
+  {
+    "id": "s_chat_closed",
+    "type": "chat",
+    "title": "Закрытый чат «второй круг»",
+    "date": "2025-08-22",
+    "origin": "Закрытый чат «второго круга». Доступ только участникам, прошедшим разбор. Фрагменты переданы бывшим участником.",
+    "reliability": 70,
+    "unlockedByEvidenceIds": [
+      "e_chat_second_circle_hint"
+    ]
+  },
+  {
+    "id": "s_payment_memo",
+    "type": "payment",
+    "title": "Внутренний платёжный мемо",
+    "date": "2025-09-01",
+    "origin": "Внутренний документ, описывающий тарифы и работу с оплатами. Получен через бывшего участника.",
+    "reliability": 85,
+    "unlockedByEvidenceIds": [
+      "e_ex_financial_pressure"
+    ]
+  },
+  {
+    "id": "s_internal_checklist",
+    "type": "internalDoc",
+    "title": "Чек-лист куратора",
+    "date": "2025-09-05",
+    "origin": "Рабочий чек-лист куратора. Получен после раскрытия платёжного мемо. Подпись «А.Г.».",
+    "reliability": 80,
+    "unlockedByEvidenceIds": [
+      "e_payment_pressure_script"
+    ]
+  }
+]

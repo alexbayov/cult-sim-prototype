@@ -1,0 +1,191 @@
+[
+  {
+    "id": "p_love_bombing",
+    "title": "Тёплый приём",
+    "shortDescription": "Усиленное принятие и внимание в начале.",
+    "fullDescription": "Группа быстро создаёт ощущение принятия и тепла на старте, чтобы участник эмоционально привязался к среде раньше, чем оценит её правила.",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_landing_new_circle",
+      "e_chat_warm_welcome"
+    ],
+    "weakEvidenceIds": [
+      "e_landing_free_week"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Сами по себе тёплый приём и поддержка нормальны. Признаком становятся ускоренное «свой/чужой» разделение и снижение критичности на старте."
+  },
+  {
+    "id": "p_isolation",
+    "title": "Изоляция",
+    "shortDescription": "Постепенное ограничение внешних связей.",
+    "fullDescription": "Участников мягко отучают опираться на людей вне группы: советы извне обесцениваются, время поглощается ритмом группы, обсуждения вне круга маркируются как «непонимание».",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_ex_isolation_request",
+      "e_relative_no_contact"
+    ],
+    "weakEvidenceIds": [
+      "e_landing_special_path",
+      "e_video_special_path"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Сильный знак — прямые просьбы меньше общаться с внешними людьми и систематические совпадения времени группы с привычными «окнами» семейного контакта."
+  },
+  {
+    "id": "p_loaded_language",
+    "title": "Свой язык",
+    "shortDescription": "Внутренние термины и ярлыки.",
+    "fullDescription": "Группа развивает собственный словарь, разделяющий «своих» и «не своих». Слова заменяют объяснения и помогают избегать критики.",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_chat_special_term",
+      "e_closed_loyalty_term"
+    ],
+    "weakEvidenceIds": [
+      "e_landing_new_circle"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Сам по себе сленг — нормален. Сигнал — когда термин подменяет аргумент: «он просто не осознанный» вместо разбора по сути."
+  },
+  {
+    "id": "p_financial_pressure",
+    "title": "Финансовое давление",
+    "shortDescription": "Эскалация платежей и срочности.",
+    "fullDescription": "После «бесплатной» точки входа предлагается последовательность платных уровней с давлением по срочности и социальным ожиданием.",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_closed_finance_push",
+      "e_ex_financial_pressure",
+      "e_payment_tiers"
+    ],
+    "weakEvidenceIds": [
+      "e_landing_free_week",
+      "e_relative_payment_concern"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Признак — сочетание срочности, скидок «только сегодня», социального давления группы и отсутствия прозрачной возможности паузы или возврата."
+  },
+  {
+    "id": "p_confession",
+    "title": "Публичный разбор",
+    "shortDescription": "Регулярные «разборы» личного перед группой.",
+    "fullDescription": "Участников приучают рассказывать личные истории, страхи и ошибки перед группой. Информация затем используется как рычаг доверия и давления.",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_closed_weekly_review",
+      "e_checklist_doubt_response"
+    ],
+    "weakEvidenceIds": [],
+    "counterEvidenceIds": [],
+    "debriefText": "Сигнал — обязательность разбора и отсутствие выбора степени раскрытия. Здоровые группы поддерживают добровольность и право не говорить."
+  },
+  {
+    "id": "p_coercive_control",
+    "title": "Скрытое принуждение",
+    "shortDescription": "Скрипты дожима и контроль расписания.",
+    "fullDescription": "Поведение участников управляется через прописанные скрипты кураторов, давление расписанием и системой одобрения/неодобрения.",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_payment_pressure_script",
+      "e_checklist_doubt_response"
+    ],
+    "weakEvidenceIds": [
+      "e_chat_morning_ritual"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Различие — между обычным расписанием и системой, в которой любое отклонение требует объяснений и сопровождается стыдом или санкциями."
+  },
+  {
+    "id": "p_dependency_loop",
+    "title": "Петля зависимости",
+    "shortDescription": "Поддержка только внутри ритма группы.",
+    "fullDescription": "Состояние участника становится зависимым от регулярного контакта с группой: ритуалы, утренние «кружки», ежедневные подтверждения принадлежности.",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_chat_morning_ritual",
+      "e_checklist_outreach"
+    ],
+    "weakEvidenceIds": [
+      "e_relative_no_contact"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Сигнал — пропуск ритуала ощущается как кризис, а не как обычный выходной."
+  },
+  {
+    "id": "p_information_control",
+    "title": "Контроль информации",
+    "shortDescription": "Регулирование того, что обсуждается и где.",
+    "fullDescription": "Критические темы вытесняются в личные сообщения, внутренние термины блокируют наружные обсуждения, появляется норма «не выносить наружу».",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_chat_dont_tell_outside",
+      "e_chat_skeptic_redirect"
+    ],
+    "weakEvidenceIds": [],
+    "counterEvidenceIds": [],
+    "debriefText": "Сигнал — устойчивая практика переноса критики в приват и наказание за публичное обсуждение, даже мягкое."
+  },
+  {
+    "id": "p_leader_control",
+    "title": "Авторитет лидера",
+    "shortDescription": "Образ лидера как непогрешимого источника метода.",
+    "fullDescription": "Любая критика лидера обесценивается, его слова интерпретируются группой как окончательные. Возможные сомнения относятся к «неосознанности» сомневающегося.",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_closed_loyalty_term",
+      "e_ex_shame_public"
+    ],
+    "weakEvidenceIds": [
+      "e_landing_special_path"
+    ],
+    "counterEvidenceIds": [
+      "e_video_leader_humility"
+    ],
+    "debriefText": "Признак — асимметрия между публичной «открытостью» лидера и реальной невозможностью внутри группы безопасно с ним не согласиться."
+  },
+  {
+    "id": "p_shame_induction",
+    "title": "Управление стыдом",
+    "shortDescription": "Стыд за уход или сомнение.",
+    "fullDescription": "Выход из группы и сомнения публично или неявно маркируются как личное падение, незрелость, предательство.",
+    "requiredEvidenceCount": 1,
+    "strongEvidenceIds": [
+      "e_ex_shame_public"
+    ],
+    "weakEvidenceIds": [
+      "e_chat_skeptic_redirect"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Здоровое сообщество может расстраиваться, но не публикует уход человека как доказательство его «слабости»."
+  },
+  {
+    "id": "p_protective_ties",
+    "title": "Защитные связи",
+    "shortDescription": "Внешний контакт, тянущий обратно к реальности.",
+    "fullDescription": "Защитный фактор: устойчивая внешняя связь — родственник, друг, специалист — которая сохраняет альтернативную точку зрения и присутствие.",
+    "requiredEvidenceCount": 1,
+    "strongEvidenceIds": [
+      "e_ex_protective_family",
+      "e_relative_no_contact"
+    ],
+    "weakEvidenceIds": [],
+    "counterEvidenceIds": [],
+    "debriefText": "Защитные связи не «разрушают» группу — они снижают её исключительность, оставляя человеку выбор."
+  },
+  {
+    "id": "p_reality_testing",
+    "title": "Сверка с реальностью",
+    "shortDescription": "Сохранённая возможность критически оценивать опыт.",
+    "fullDescription": "Защитный фактор: участник сохраняет привычку проверять свои выводы вне группы, удерживать сомнение и не закрывать его внутренними терминами.",
+    "requiredEvidenceCount": 1,
+    "strongEvidenceIds": [
+      "e_video_leader_humility"
+    ],
+    "weakEvidenceIds": [
+      "e_chat_skeptic_redirect"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Этот паттерн — про инфраструктуру сомнения: возможность задать вопрос и получить аргумент, а не ярлык."
+  }
+]

@@ -4,9 +4,51 @@
 
 ## Коротко
 
-Мы делаем браузерную карточную игру/симулятор о том, как обычные группы могут постепенно становиться деструктивными системами.
+> **Pivot:** проект уходит от карточного симулятора секты к **cult investigation / dossier game** (см. fullbody-концепт). Старая карточная модель пока остаётся как legacy, но новые фичи строятся на investigation-модели.
 
-Первый кейс: **инфоцыганский марафон личной эффективности**.
+Первый кейс расследования: **«Марафон личной эффективности»**.
+
+## Investigation pivot — текущее состояние
+
+- Контент-модель расследования (case → persons → sources → evidence → patterns → report → debrief) реализована в `src/game/investigation/` + `src/game/cases/info-business-marathon/`. См. подробности в `docs/CONTENT_MODEL.md` (раздел «Investigation content»).
+- Старый карточный сценарий (`src/game/scenarios/info-business-marathon/`) и `App.tsx` пока не трогаем — они остаются как legacy/prototype, чтобы build не падал.
+- PR #8 (валидатор) и PR #9 (finale/debrief) старой модели **не мерджим**: идеи валидации и debrief перенесены в investigation-модель.
+
+## Что есть в коде после investigation-PR
+
+```txt
+src/game/investigation/types.ts          # InvestigationCase, CasePerson, CaseSource, EvidenceFragment, ControlPattern, ReportContent, DebriefEntry, ...
+src/game/investigation/contentSchema.ts  # validateInvestigationContent + assertValidInvestigationContent
+src/game/investigation/data.ts           # сборка кейса + лог валидации при импорте
+src/game/cases/info-business-marathon/   # case.json, persons.json, sources.json, evidence.json, patterns.json, report.json, debrief.json
+scripts/validate-investigation.mjs       # node-runner валидатора (без React/Vite)
+```
+
+Команды:
+
+```bash
+npm run validate:investigation   # быстрая проверка кросс-ссылок и структуры
+npm run build                    # tsc -b + vite build
+npm run lint
+```
+
+## Следующие шаги после investigation-pivot
+
+1. **Dev B (dossier UI shell)** — заменить `App.tsx` на dossier-layout: source viewer, evidence tray, persons board, pattern board, timeline, final report. Использовать `infoBusinessMarathonInvestigation` из `src/game/investigation/data.ts`. UI должен корректно работать на 390×844.
+2. **Dev C (evidence/report loop)** — реализовать механику отметки фрагментов как evidence, привязки к persons/patterns, разблокировки источников и сборки финального report. Использовать thresholds из `report.json`.
+3. **Legacy retire** — после того как dossier-UI заменит карточный, удалить `src/game/scenarios/...` и старый `src/App.tsx`/`engine.ts`. До этого не трогаем.
+
+## Что НЕ делать в investigation-PR (Dev A scope)
+
+- Не переписывать `App.tsx` под dossier.
+- Не удалять `src/game/scenarios/...` и старый движок.
+- Не мерджить PR #8 / #9.
+- Не добавлять зависимости.
+- Не использовать `any` / `Record<string, unknown>` для core-данных.
+
+## Текущий стек
+
+Мы делаем браузерную игру/расследование о том, как обычные группы могут постепенно становиться деструктивными системами.
 
 Текущий стек:
 
