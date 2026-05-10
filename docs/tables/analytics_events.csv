@@ -1,0 +1,14 @@
+event_name,trigger,properties,priority,implementation_phase,notes
+game_start,Началась новая партия,"scenarioId; saveVersion; source",P0,vertical-slice,Пока можно логировать в console/dev panel
+save_loaded,Загружен save,"scenarioId; saveVersion; turn",P0,save-load,Нужно для отладки localStorage и Yandex SDK
+card_seen,Карта попала в руку,"cardId; turn; scenarioId",P1,analytics,Полезно для частоты появления и игнора
+card_played,Игрок выбрал карту,"cardId; turn; groupMetrics; participantSnapshot",P0,vertical-slice,Ключевое событие дизайна
+combo_triggered,Сработало комбо,"comboId; turn; cardsInWindow",P0,vertical-slice,Проверка что игрок видит паттерны
+crisis_resolved,Игрок ответил на кризис,"crisisId; responseId; turn",P1,loop-v2,Появится после реакций на кризисы
+participant_selected,Игрок открыл участника,"participantId; turn",P2,ux-analysis,Покажет интерес к людям
+red_flag_revealed,Открылся красный флаг,"redFlagId; sourceCardId; comboId",P1,analytics,Важно для образовательной части
+finale_reached,Партия закончилась,"finaleId; turn; score; groupMetrics",P0,vertical-slice,Главная метрика завершения
+debrief_opened,Открыт финальный разбор,"finaleId; debriefTags",P1,analytics,Проверка психпросвета
+ad_shown,Показана реклама,"placement; provider; scenarioId",P1,yandex-games,Только после SDK
+ad_completed,Реклама досмотрена,"placement; rewardType",P1,yandex-games,Rewarded не должен давать pay-to-win
+game_reset,Сброс партии,"turn; scenarioId; reason",P1,analytics,Может показывать фрустрацию
