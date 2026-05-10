@@ -39,6 +39,21 @@ src/game/scenarios/info-business-marathon/
 
 Когда появятся финалы и debrief-словарь, добавим рядом `finales.json` (и при необходимости `debrief.json`) и подключим их в `data.ts` так же, как остальные секции.
 
+## Валидатор контента
+
+Для статической проверки JSON-контента есть отдельная команда:
+
+```bash
+npm run validate:content
+```
+
+Это Node-скрипт `scripts/validate-content.mjs` (без новых зависимостей). Он:
+
+- проверяет наличие и структуру обязательных файлов (`scenario.json`, `participants.json`, `cards.json`, `combos.json`);
+- падает с понятным списком ошибок и ненулевым exit code, если контент сломан (отсутствуют поля, дубликаты `id`, метрики вне 0..100, неизвестные `type`/`tier`/`scope`/`selector`/`metric`, `requiredTags` ссылается на тег, которого нет ни на одной карте, `windowTurns` не положительное целое и т.п.);
+- не считает ошибкой отсутствие `finales.json` и `debrief.json`, но валидирует их, если файлы появились;
+- если `debrief.json` есть, выдаёт warning для `debriefTags` карт и комбо, которых нет в словаре (это не блокирует команду — словарь можно наполнять постепенно).
+
 ## Участник
 
 Участник — главный объект игры.
@@ -219,8 +234,9 @@ src/game/scenarios/info-business-marathon/
 После любых правок контента:
 
 ```bash
+npm run validate:content
 npm run build
 npm run lint
 ```
 
-Если build падает из-за schema mismatch, сначала исправить JSON, а не обходить validation.
+Если `validate:content` или `build` падают из-за schema mismatch, сначала исправить JSON, а не обходить validation.

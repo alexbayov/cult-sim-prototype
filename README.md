@@ -25,9 +25,12 @@ npm run lint
 Перед каждым PR обязательно прогонять:
 
 ```bash
+npm run validate:content
 npm run build
 npm run lint
 ```
+
+`npm run validate:content` проверяет JSON-контент сценариев в `src/game/scenarios/` и падает с понятным списком ошибок, если контент сломан.
 
 ## Архитектура
 
