@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './App.css'
 import { createInitialState, groupMetricLabels, participantMetricLabels, playCard } from './game/engine'
+import { clearSavedGame, getSaveVersion, loadSavedGame, saveGame } from './game/storage'
 import type { Card, GroupMetric, Participant, ParticipantMetric } from './game/types'
 
 function App() {
-  const [game, setGame] = useState(createInitialState)
+  const [game, setGame] = useState(() => loadSavedGame() ?? createInitialState())
   const [selectedParticipantId, setSelectedParticipantId] = useState(game.participants[0].id)
   const selectedParticipant = useMemo(
     () =>
@@ -19,9 +20,14 @@ function App() {
 
   const resetGame = () => {
     const nextGame = createInitialState()
+    clearSavedGame()
     setGame(nextGame)
     setSelectedParticipantId(nextGame.participants[0].id)
   }
+
+  useEffect(() => {
+    saveGame(game)
+  }, [game])
 
   return (
     <main className="app">
@@ -37,6 +43,7 @@ function App() {
         <div className="turn-card">
           <span>неделя</span>
           <strong>{Math.min(game.turn, 10)} / 10</strong>
+          <small>save v{getSaveVersion()} · auto</small>
           <button type="button" onClick={resetGame}>
             новая партия
           </button>

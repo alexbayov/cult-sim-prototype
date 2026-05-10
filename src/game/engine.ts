@@ -1,4 +1,5 @@
-import { cards, comboRules, initialGroup, participants } from './data'
+import { infoBusinessMarathonScenario } from './data'
+import { validateScenarioContent } from './contentSchema'
 import type {
   Card,
   ComboRule,
@@ -49,13 +50,18 @@ const rotateDeck = (deck: Card[], count: number) => {
 }
 
 export const createInitialState = (): GameState => {
-  const orderedCards = [...cards]
+  const scenarioErrors = validateScenarioContent(infoBusinessMarathonScenario)
+  if (scenarioErrors.length > 0) {
+    throw new Error(`Invalid scenario content: ${scenarioErrors.join('; ')}`)
+  }
+
+  const orderedCards = [...infoBusinessMarathonScenario.cards]
   const { hand, deck } = rotateDeck(orderedCards, 5)
 
   return {
     turn: 1,
-    group: { ...initialGroup },
-    participants: participants.map((participant) => ({
+    group: { ...infoBusinessMarathonScenario.initialGroup },
+    participants: infoBusinessMarathonScenario.participants.map((participant) => ({
       ...participant,
       metrics: { ...participant.metrics },
     })),
@@ -135,7 +141,7 @@ const comboAlreadyLogged = (logs: LogEntry[], combo: ComboRule) =>
   logs.some((entry) => entry.title === combo.title && entry.tone === 'combo')
 
 const findTriggeredCombos = (played: Card[], logs: LogEntry[]) =>
-  comboRules.filter((combo) => {
+  infoBusinessMarathonScenario.comboRules.filter((combo) => {
     if (comboAlreadyLogged(logs, combo)) return false
     const tags = recentTags(played, combo.windowTurns)
     return combo.requiredTags.every((tag) => tags.has(tag))
