@@ -314,7 +314,7 @@ export function buildResolution(
       key: 'noise',
       label: 'шум',
       value: noiseValue,
-      description: 'Доля красных селёдок в подборке.',
+      description: 'Доля шумных фрагментов в закладках.',
     },
   ]
 
@@ -342,7 +342,7 @@ export function buildResolution(
     {
       id: 'a_no_rush',
       title: 'Не поспешил',
-      description: 'Сводка собрана без красных селёдок в закладках.',
+      description: 'Сводка собрана без шумных фрагментов в закладках.',
       earned: notRushed,
     },
     {

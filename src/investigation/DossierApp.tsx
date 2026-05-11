@@ -79,8 +79,8 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
     selectedCount > 0 ? view.selectedObservations : view.observations
   const observationsCounter =
     selectedCount > 0
-      ? `${selectedCount} в подборке`
-      : `${observationsList.length} в подборке`
+      ? `${selectedCount} в закладках`
+      : `${observationsList.length} наблюдений`
 
   return (
     <div className="dossier-shell">
@@ -524,8 +524,7 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
                   </ul>
                 )}
                 <p className="dossier-report-meta">
-                  материалы дела: {view.caseId} · исход:{' '}
-                  {view.report.outcomeId}
+                  материалы: «{view.title}» · сводка: «{view.report.title}»
                 </p>
                 <div className="dossier-report-actions">
                   <button
@@ -742,7 +741,7 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
               <h3>что было шумом</h3>
               {resolution.noiseFragments.length === 0 ? (
                 <p className="dossier-resolution-empty">
-                  Красных селёдок в подборке не найдено.
+                  Шумных фрагментов в закладках не найдено.
                 </p>
               ) : (
                 <ul className="dossier-resolution-list">

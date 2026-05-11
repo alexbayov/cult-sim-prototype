@@ -30,8 +30,18 @@ function pickNudge({
     return { tone: 'idle', text: 'Поставьте первую закладку в материале.' }
   }
 
+  if (confirmedPatternCount >= 4) {
+    return {
+      tone: 'ready',
+      text: 'Достаточно связей для сильной сводки.',
+    }
+  }
+
   if (confirmedPatternCount >= 2) {
-    return { tone: 'ready', text: 'Можно сформировать сводку.' }
+    return {
+      tone: 'ready',
+      text: 'Уже можно собрать раннюю сводку.',
+    }
   }
 
   if (unlockedMaterialCount > initialMaterialCount) {
