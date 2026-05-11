@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "validate:investigation": "node scripts/validate-investigation.mjs"
+    "validate:investigation": "node scripts/validate-investigation.mjs",
+    "smoke:interaction": "node scripts/smoke-interaction-model.mjs"
   },
   "dependencies": {
     "react": "^19.2.5",
