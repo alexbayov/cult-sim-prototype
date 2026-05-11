@@ -70,17 +70,35 @@ npm run validate:investigation
 | `ReportContent` | Финальный отчёт: thresholds, outcomes (исходы), список секций. | `outcomes[].requiredPatternIds / forbiddenPatternIds → ControlPattern` |
 | `DebriefEntry` | Образовательная справка по паттерну (термин, объяснение, защитные факторы, примеры). | `exampleEvidenceIds → EvidenceFragment` |
 
-### Текущий сид: `info-business-marathon`
+### Текущие сиды
 
-- 1 case (`Марафон личной эффективности`).
-- 6 persons: leader, admin, vulnerable participant, ex-member, donor, relative.
-- 8 sources: landing, открытый чат, закрытый чат, свидетельство ex-member, платёжный мемо, видеотранскрипт, сообщение родственника, внутренний чек-лист.
-- 26 evidence fragments (включая два red herring — `e_landing_results`, `e_video_general_promise`).
-- 12 patterns (10 механизмов контроля + 2 защитных — protective_ties, reality_testing).
-- 4 report outcomes (`ro_insufficient`, `ro_warning`, `ro_system_proven`, `ro_misread`).
-- 12 debrief entries — по одной на каждый паттерн.
+В репозитории два кейса, оба собираются и валидируются:
 
-Source unlocks образуют цепочку: `e_landing_special_path → s_testimony_ex`; `e_chat_second_circle_hint → s_chat_closed`; `e_ex_financial_pressure → s_payment_memo`; `e_payment_pressure_script → s_internal_checklist`.
+**`info-business-marathon` — «Марафон личной эффективности».**
+
+- 8 persons: leader, admin, vulnerable participant, ex-member, donor, relative + curator + external observer.
+- 12 sources: лендинг, открытый чат, закрытый чат, свидетельство ex-member, платёжный мемо, видеотранскрипт, сообщение родственника, внутренний чек-лист и т. д.
+- 47 evidence fragments (включая red herring — `e_landing_results`, `e_video_general_promise`, `e_comments_donor_endorsement`).
+- 12 patterns (10 механизмов контроля + 2 защитных — `p_protective_ties`, `p_reality_testing`).
+- 6 report outcomes (`ro_insufficient`, `ro_early_signal`, `ro_warning`, `ro_protective_focus`, `ro_system_proven`, `ro_misread`).
+- 14 debrief entries.
+
+Source unlocks: `e_landing_special_path → s_testimony_ex`; `e_chat_second_circle_hint → s_chat_closed`; `e_ex_financial_pressure → s_payment_memo`; `e_payment_pressure_script → s_internal_checklist`; `e_chat_refund_hint → s_refund_thread`; `e_checklist_curator_handoff → s_curator_notes`.
+
+**`family-retreat-center` — «Семейный ретрит-центр».**
+
+- 6 persons: наставник, оператор-куратор, новая участница, бывший волонтёр, партнёр участницы, внешний психолог.
+- 10 sources: лендинг, приветственное письмо, расписание первых 10 дней, групповой чат, личный дневник, письмо партнёра, платёжный мемо, свидетельство бывшего волонтёра, внутренняя записка персонала, статья районной газеты.
+- 31 evidence fragments (включая red herring — `e_news_neutral`).
+- 11 patterns (9 наблюдательных + 2 защитных — `p_protective_ties`, `p_reality_testing`).
+- 5 report outcomes (`ro_too_early`, `ro_early_signal`, `ro_warning`, `ro_protective_focus`, `ro_system_proven`).
+- 11 debrief entries.
+
+Source unlocks: `e_welcome_quiet_period → s_group_chat`; `e_partner_change → s_diary_ekaterina`; `e_diary_money_anxiety → s_payment_memo`; `e_landing_special_path → s_ex_testimony`; `e_ex_unpaid_labor → s_staff_note`.
+
+Оба кейса экспортируются из `src/game/investigation/data.ts` (`infoBusinessMarathonInvestigation`, `familyRetreatCenterInvestigation`) и попадают в массив `investigationContents`. UI на данный момент рендерит только первый кейс — второй существует как content-only сид.
+
+`scripts/validate-investigation.mjs` автоматически находит все папки в `src/game/cases/`, в которых есть `case.json`, и валидирует каждую отдельно. Чтобы добавить третий кейс, достаточно положить новый набор JSON-файлов в `src/game/cases/<new-case-id>/` и добавить экспорт в `data.ts`.
 
 ### Правила редактирования контента
 
