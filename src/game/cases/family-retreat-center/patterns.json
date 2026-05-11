@@ -1,0 +1,184 @@
+[
+  {
+    "id": "p_fast_family",
+    "title": "быстрое чувство семьи",
+    "shortDescription": "Сильное «мы» с первого дня, опережающее знакомство.",
+    "fullDescription": "Центр быстро создаёт ощущение принятой семьи: общий быт, обращения «свои», ритуалы приветствия. Привязанность формируется раньше, чем участник успевает оценить правила и обязательства.",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_welcome_warm_intro",
+      "e_diary_first_relief"
+    ],
+    "weakEvidenceIds": [
+      "e_landing_real_values",
+      "e_chat_warm_support"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Тёплый приём сам по себе нормален. Сигналом становится темп: уровень «своего человека» появляется быстрее, чем человек разобрался с правилами и стоимостью."
+  },
+  {
+    "id": "p_isolation",
+    "title": "сужение внешних связей",
+    "shortDescription": "Мягкое вытеснение людей и контактов вне центра.",
+    "fullDescription": "Внешние звонки и встречи проходят через расписание и наставника. Тишина и «спокойный режим» нормализуют отсутствие коротких контактов с близкими; внешние мнения маркируются как «не из контекста».",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_welcome_quiet_period",
+      "e_diary_partner_silence",
+      "e_staff_partner_calls_off"
+    ],
+    "weakEvidenceIds": [
+      "e_welcome_phone_box",
+      "e_partner_change",
+      "e_ex_authority"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Тишина и цифровая пауза — частая практика ретритов. Сигнал — когда тишина превращается в фильтр на короткие проверочные контакты, а звонки от близких проходят через наставника."
+  },
+  {
+    "id": "p_no_pause_rhythm",
+    "title": "ритм без пауз",
+    "shortDescription": "Плотное расписание без свободных окон.",
+    "fullDescription": "Расписание плотно заполнено работой, кругами и тишиной. Свободного времени фактически нет, усталость объясняется «качеством присутствия», а не нагрузкой.",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_schedule_morning_work",
+      "e_schedule_no_pause"
+    ],
+    "weakEvidenceIds": [
+      "e_schedule_evening_circle"
+    ],
+    "counterEvidenceIds": [
+      "e_schedule_silent_walks"
+    ],
+    "debriefText": "Плотный график сам по себе нормален. Сигнал — когда любая пауза маркируется как «не вошёл в ритм» и когда отдых сводится к смене типа нагрузки."
+  },
+  {
+    "id": "p_leader_authority",
+    "title": "авторитет наставника",
+    "shortDescription": "Решения участников проходят через одного человека.",
+    "fullDescription": "Наставник принимает решения о расписании участников, о звонках домой, о внутренних разборах. Несогласие с ним публично не обсуждается, обозначается как «незрелость» или «непонимание программы».",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_ex_authority",
+      "e_staff_partner_calls_off"
+    ],
+    "weakEvidenceIds": [
+      "e_landing_special_path"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Признак — асимметрия: программу можно обсуждать только с самим наставником, а внутри группы прямое несогласие фактически невозможно."
+  },
+  {
+    "id": "p_financial_pressure",
+    "title": "денежное давление",
+    "shortDescription": "Платёжная модель завязана на удержании участника.",
+    "fullDescription": "После «уровня поддержки» предлагаются расширенные уровни и «поддерживающее членство». Возврат ограничен ранним сроком, отказ от программы маркируется как срыв.",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_payment_tiers",
+      "e_payment_no_refund_after_d3",
+      "e_partner_money"
+    ],
+    "weakEvidenceIds": [
+      "e_landing_donation_model"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Признак — сочетание непрозрачной модели «пожертвований», ограниченного возврата и общественного давления группы при попытке уйти раньше времени."
+  },
+  {
+    "id": "p_labor_gratitude",
+    "title": "труд как благодарность",
+    "shortDescription": "Неоплачиваемая работа учитывается «в счёт программы».",
+    "fullDescription": "Часть стоимости программы покрывается «волонтёрскими часами». Подсчёт и баланс часов ведутся центром, у участника нет независимой возможности проверить их.",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_payment_volunteer_hours",
+      "e_ex_unpaid_labor"
+    ],
+    "weakEvidenceIds": [
+      "e_schedule_morning_work"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Помощь по хозяйству в ретрите нормальна, когда она символическая и не зачитывается в стоимость. Сигнал — когда «отработка» становится плановой нагрузкой и условием доступа к продолжению программы."
+  },
+  {
+    "id": "p_personal_before_group",
+    "title": "личное перед группой",
+    "shortDescription": "Регулярные публичные разборы личных тем.",
+    "fullDescription": "Вечерние круги превращаются в обязательный разбор «больной точки» каждого. Информация затем используется наставником и куратором как рычаг доверия и давления.",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_schedule_evening_circle",
+      "e_ex_partner_control"
+    ],
+    "weakEvidenceIds": [
+      "e_staff_doubt_protocol"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Здоровые групповые форматы поддерживают добровольность и право не говорить. Сигнал — когда отказ говорить публично рассматривается как сопротивление программе."
+  },
+  {
+    "id": "p_inside_language",
+    "title": "свой язык",
+    "shortDescription": "Внутренние термины делят «настоящих» и «вне круга».",
+    "fullDescription": "Центр развивает собственный словарь («настоящие», «домашние», «вне круга»). Слова заменяют объяснения и помогают избегать критики извне.",
+    "requiredEvidenceCount": 2,
+    "strongEvidenceIds": [
+      "e_chat_inside_terms"
+    ],
+    "weakEvidenceIds": [
+      "e_landing_real_values",
+      "e_landing_special_path"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Сам по себе сленг — нормален. Сигнал — когда термин подменяет аргумент: «он просто не настоящий» вместо разбора по сути."
+  },
+  {
+    "id": "p_doubt_shame",
+    "title": "стыд за сомнение",
+    "shortDescription": "Сомнение и уход маркируются как личная слабость.",
+    "fullDescription": "Уход и сомнения публично или неявно описываются как «срыв», «незрелость» или «возврат к старому». Прямая критика программы внутри центра не звучит безопасно.",
+    "requiredEvidenceCount": 1,
+    "strongEvidenceIds": [
+      "e_staff_doubt_protocol"
+    ],
+    "weakEvidenceIds": [
+      "e_chat_doubt_to_dm"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Здоровое сообщество может расстраиваться, но не объясняет уход человека как подтверждение его «слабости»."
+  },
+  {
+    "id": "p_protective_ties",
+    "title": "внешние опоры",
+    "shortDescription": "Удерживающая внешняя связь сохраняет альтернативу.",
+    "fullDescription": "Защитный фактор: устойчивая внешняя связь — партнёр, родственник, специалист — которая сохраняет альтернативную точку зрения и присутствие.",
+    "requiredEvidenceCount": 1,
+    "strongEvidenceIds": [
+      "e_ex_protective_sister",
+      "e_partner_change"
+    ],
+    "weakEvidenceIds": [
+      "e_partner_money"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Защитные связи не «разрушают» программу — они снижают её исключительность, оставляя человеку выбор."
+  },
+  {
+    "id": "p_reality_testing",
+    "title": "проверка реальности",
+    "shortDescription": "Сохранённая привычка сверять опыт с внешним контекстом.",
+    "fullDescription": "Защитный фактор: участник или наблюдатель сохраняет привычку проверять выводы вне центра, удерживать сомнение и не закрывать его внутренним термином.",
+    "requiredEvidenceCount": 1,
+    "strongEvidenceIds": [
+      "e_news_inspection",
+      "e_diary_money_anxiety"
+    ],
+    "weakEvidenceIds": [
+      "e_news_neutral"
+    ],
+    "counterEvidenceIds": [],
+    "debriefText": "Это наблюдение — про инфраструктуру сомнения: возможность задать вопрос и получить аргумент, а не ярлык."
+  }
+]

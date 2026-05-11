@@ -1,0 +1,102 @@
+[
+  {
+    "id": "s_retreat_landing",
+    "type": "landing",
+    "title": "Лендинг центра «Возвращение»",
+    "date": "2025-04-12",
+    "origin": "публичный сайт центра",
+    "reliability": 55,
+    "unlockedByEvidenceIds": []
+  },
+  {
+    "id": "s_welcome_email",
+    "type": "internalDoc",
+    "title": "Приветственное письмо новому участнику",
+    "date": "2025-05-02",
+    "origin": "копия письма, переданная партнёром участницы",
+    "reliability": 70,
+    "unlockedByEvidenceIds": []
+  },
+  {
+    "id": "s_first_10_days",
+    "type": "internalDoc",
+    "title": "Расписание первых 10 дней программы",
+    "date": "2025-05-02",
+    "origin": "вложение к приветственному письму",
+    "reliability": 75,
+    "unlockedByEvidenceIds": []
+  },
+  {
+    "id": "s_partner_letter",
+    "type": "internalDoc",
+    "title": "Письмо партнёра участницы",
+    "date": "2025-05-22",
+    "origin": "обращение в редакцию",
+    "reliability": 75,
+    "unlockedByEvidenceIds": []
+  },
+  {
+    "id": "s_local_news",
+    "type": "news",
+    "title": "Заметка районной газеты о ретрит-центре",
+    "date": "2025-05-10",
+    "origin": "районная газета, тираж 3 000",
+    "reliability": 65,
+    "unlockedByEvidenceIds": []
+  },
+  {
+    "id": "s_group_chat",
+    "type": "chat",
+    "title": "Групповой чат участников ретрита",
+    "date": "2025-05-08",
+    "origin": "скриншоты, переданные бывшим участником",
+    "reliability": 70,
+    "unlockedByEvidenceIds": [
+      "e_welcome_quiet_period"
+    ]
+  },
+  {
+    "id": "s_diary_ekaterina",
+    "type": "diary",
+    "title": "Дневник Екатерины М. за десять дней программы",
+    "date": "2025-05-12",
+    "origin": "тетрадь, переданная партнёром",
+    "reliability": 80,
+    "unlockedByEvidenceIds": [
+      "e_partner_change"
+    ]
+  },
+  {
+    "id": "s_payment_memo",
+    "type": "payment",
+    "title": "Внутренний документ о платежах и волонтёрских часах",
+    "date": "2025-05-15",
+    "origin": "копия, переданная бывшим участником",
+    "reliability": 80,
+    "unlockedByEvidenceIds": [
+      "e_diary_money_anxiety"
+    ]
+  },
+  {
+    "id": "s_ex_testimony",
+    "type": "testimony",
+    "title": "Письменное свидетельство Михаила В.",
+    "date": "2025-06-01",
+    "origin": "интервью, проверено перепиской",
+    "reliability": 80,
+    "unlockedByEvidenceIds": [
+      "e_landing_special_path"
+    ]
+  },
+  {
+    "id": "s_staff_note",
+    "type": "internalDoc",
+    "title": "Внутренняя записка персонала",
+    "date": "2025-05-30",
+    "origin": "скан, переданный бывшим участником",
+    "reliability": 80,
+    "unlockedByEvidenceIds": [
+      "e_ex_unpaid_labor"
+    ]
+  }
+]
