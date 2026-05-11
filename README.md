@@ -20,6 +20,7 @@ npm install
 npm run dev
 npm run build
 npm run lint
+npm run validate:investigation
 ```
 
 Перед каждым PR обязательно прогонять:
@@ -27,7 +28,15 @@ npm run lint
 ```bash
 npm run build
 npm run lint
+npm run validate:investigation
 ```
+
+`validate:investigation` — node-скрипт, который проверяет content для investigation-кейсов (`src/game/cases/<case-id>/*.json`):
+
+- **errors (exit 1)** — структурные проблемы: дубликаты id, висячие ссылки, выход из числовых диапазонов, debrief с неизвестным evidence id.
+- **warnings (exit 0)** — content-design сигналы: недоступные источники, пустые источники, orphan-паттерны, отсутствие debrief на паттерн, отсутствие low/medium/strong report outcome, регрессия видимой лексики (`улика`, `доказательство`, `ДЕЛО`, `ДОСЬЕ`, `секта`, `love bombing`, `coercive control`, `gaslighting`, `газлайтинг`, `паттерн` в коротких видимых полях).
+
+Языковые предупреждения намеренно не валят валидатор — они ловят регрессию, не блокируя контент-итерации. Подробнее — в [docs/CONTENT_MODEL.md](docs/CONTENT_MODEL.md).
 
 ## Архитектура
 
