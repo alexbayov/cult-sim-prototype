@@ -1,16 +1,17 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import './dossier.css'
 import { infoBusinessMarathonInvestigation } from '../game/investigation/data'
-import {
-  buildDossierView,
-  type DossierViewMaterial,
-  type DossierViewObservation,
-  type DossierViewPattern,
-  type DossierViewPerson,
-  type DossierViewTimelineEvent,
-  type ReliabilityLevel,
-  type RiskBucket,
-  type SignalLevel,
+import { useInvestigationState } from './useInvestigationState'
+import type {
+  ConnectionStatus,
+  DossierViewMaterial,
+  DossierViewObservation,
+  DossierViewPattern,
+  DossierViewPerson,
+  DossierViewTimelineEvent,
+  ReliabilityLevel,
+  RiskBucket,
+  SignalLevel,
 } from './investigationViewModel'
 
 const reliabilityLabel: Record<ReliabilityLevel, string> = {
@@ -32,21 +33,45 @@ const signalLabel: Record<SignalLevel, string> = {
   high: 'сильный сигнал',
 }
 
+const connectionLabel: Record<ConnectionStatus, string> = {
+  unmarked: 'нет закладок',
+  weak: 'слабая связь',
+  partial: 'промежуточная связь',
+  strong: 'связь подтверждена',
+  contradicted: 'противоречие',
+}
+
 function DossierApp() {
-  const view = useMemo(
-    () => buildDossierView(infoBusinessMarathonInvestigation),
-    [],
-  )
-  const [activeMaterialId, setActiveMaterialId] = useState(
-    view.activeMaterialId,
-  )
-  const activeMaterial: DossierViewMaterial = useMemo(
+  const {
+    view,
+    activeMaterialId,
+    selectedCount,
+    isReportSubmitted,
+    canSubmitReport,
+    selectMaterial,
+    toggleFragment,
+    submitReport,
+    resetInvestigation,
+  } = useInvestigationState(infoBusinessMarathonInvestigation)
+
+  const activeMaterial: DossierViewMaterial | undefined = useMemo(
     () =>
       view.materials.find((m) => m.id === activeMaterialId) ??
+      view.materials.find((m) => !m.locked) ??
       view.materials[0],
     [activeMaterialId, view.materials],
   )
-  const activeFragments = view.fragmentsBySource[activeMaterial?.id] ?? []
+  const activeFragments = activeMaterial
+    ? view.fragmentsBySource[activeMaterial.id] ?? []
+    : []
+
+  const observationsHeading = selectedCount > 0 ? 'закладки' : 'ключевые наблюдения'
+  const observationsList: DossierViewObservation[] =
+    selectedCount > 0 ? view.selectedObservations : view.observations
+  const observationsCounter =
+    selectedCount > 0
+      ? `${selectedCount} в подборке`
+      : `${observationsList.length} в подборке`
 
   return (
     <div className="dossier-shell">
@@ -158,7 +183,10 @@ function DossierApp() {
                 <li
                   key={pattern.id}
                   className={
-                    'dossier-pattern-card is-signal-' + pattern.signalLevel
+                    'dossier-pattern-card is-signal-' +
+                    pattern.signalLevel +
+                    ' is-connection-' +
+                    pattern.connectionStatus
                   }
                 >
                   <header>
@@ -172,6 +200,19 @@ function DossierApp() {
                     </span>
                   </header>
                   <p>{pattern.shortDescription}</p>
+                  <p
+                    className={
+                      'dossier-pattern-connection is-' + pattern.connectionStatus
+                    }
+                  >
+                    {connectionLabel[pattern.connectionStatus]}
+                    {pattern.targetCount > 0 && (
+                      <span className="dossier-pattern-connection-count">
+                        отмечено фрагментов: {pattern.markedCount} /{' '}
+                        {pattern.targetCount}
+                      </span>
+                    )}
+                  </p>
                   <dl className="dossier-pattern-counts">
                     <div>
                       <dt>сильных сигналов</dt>
@@ -208,12 +249,16 @@ function DossierApp() {
                     aria-selected={material.id === activeMaterialId}
                     className={
                       'dossier-source-tab' +
-                      (material.id === activeMaterialId ? ' is-active' : '')
+                      (material.id === activeMaterialId ? ' is-active' : '') +
+                      (material.locked ? ' is-locked' : '')
                     }
-                    onClick={() => setActiveMaterialId(material.id)}
+                    onClick={() => selectMaterial(material.id)}
+                    disabled={material.locked}
+                    title={material.lockedHint ?? undefined}
                   >
                     <span className="dossier-source-tab-type">
                       {material.typeLabel}
+                      {material.locked ? ' · закрыт' : ''}
                     </span>
                     <span className="dossier-source-tab-date">
                       {material.date}
@@ -253,7 +298,8 @@ function DossierApp() {
                         key={fragment.id}
                         className={
                           'dossier-fragment' +
-                          (fragment.highlighted ? ' is-highlighted' : '')
+                          (fragment.highlighted ? ' is-highlighted' : '') +
+                          (fragment.selected ? ' is-selected' : '')
                         }
                       >
                         {fragment.speaker && (
@@ -262,13 +308,21 @@ function DossierApp() {
                           </span>
                         )}
                         <p className="dossier-fragment-text">{fragment.text}</p>
+                        {fragment.unlocksHint && (
+                          <p className="dossier-fragment-hint">
+                            {fragment.unlocksHint}
+                          </p>
+                        )}
                         <div className="dossier-fragment-actions">
                           <button
                             type="button"
-                            className="dossier-fragment-mark"
-                            disabled
+                            className={
+                              'dossier-fragment-mark' +
+                              (fragment.selected ? ' is-selected' : '')
+                            }
+                            onClick={() => toggleFragment(fragment.id)}
                           >
-                            сделать закладку
+                            {fragment.selected ? 'снять закладку' : 'сделать закладку'}
                           </button>
                         </div>
                       </li>
@@ -312,47 +366,63 @@ function DossierApp() {
             aria-labelledby="observations-heading"
           >
             <header className="dossier-card-head">
-              <h2 id="observations-heading">ключевые наблюдения</h2>
-              <span className="dossier-card-counter">
-                {view.observations.length} в подборке
-              </span>
+              <h2 id="observations-heading">{observationsHeading}</h2>
+              <span className="dossier-card-counter">{observationsCounter}</span>
             </header>
-            <ul className="dossier-evidence-list">
-              {view.observations.map((observation: DossierViewObservation) => (
-                <li key={observation.id} className="dossier-evidence-item">
-                  <p className="dossier-evidence-text">«{observation.text}»</p>
-                  <div className="dossier-evidence-meta">
-                    <span className="dossier-evidence-source">
-                      материал: {observation.sourceLabel}
-                    </span>
-                    {observation.linkedPersonName && (
-                      <span className="dossier-evidence-person">
-                        → {observation.linkedPersonName}
+            {observationsList.length === 0 ? (
+              <p className="dossier-source-empty">
+                Пока ни одного фрагмента не отмечено. Откройте материал и
+                поставьте закладку, чтобы он попал сюда.
+              </p>
+            ) : (
+              <ul className="dossier-evidence-list">
+                {observationsList.map((observation: DossierViewObservation) => (
+                  <li key={observation.id} className="dossier-evidence-item">
+                    <p className="dossier-evidence-text">«{observation.text}»</p>
+                    <div className="dossier-evidence-meta">
+                      <span className="dossier-evidence-source">
+                        материал: {observation.sourceLabel}
                       </span>
-                    )}
-                    {observation.linkedPatternTitle && (
-                      <span className="dossier-evidence-pattern">
-                        ⇣ {observation.linkedPatternTitle}
+                      {observation.linkedPersonName && (
+                        <span className="dossier-evidence-person">
+                          → {observation.linkedPersonName}
+                        </span>
+                      )}
+                      {observation.linkedPatternTitle && (
+                        <span className="dossier-evidence-pattern">
+                          ⇣ {observation.linkedPatternTitle}
+                        </span>
+                      )}
+                    </div>
+                    <div className="dossier-evidence-badges">
+                      <span
+                        className={
+                          'dossier-badge is-reliability-' + observation.reliability
+                        }
+                      >
+                        {reliabilityLabel[observation.reliability]}
                       </span>
+                      <span
+                        className={
+                          'dossier-badge is-weight-' + observation.weight
+                        }
+                      >
+                        {signalLabel[observation.weight]}
+                      </span>
+                    </div>
+                    {selectedCount > 0 && (
+                      <button
+                        type="button"
+                        className="dossier-evidence-remove"
+                        onClick={() => toggleFragment(observation.id)}
+                      >
+                        снять закладку
+                      </button>
                     )}
-                  </div>
-                  <div className="dossier-evidence-badges">
-                    <span
-                      className={
-                        'dossier-badge is-reliability-' + observation.reliability
-                      }
-                    >
-                      {reliabilityLabel[observation.reliability]}
-                    </span>
-                    <span
-                      className={'dossier-badge is-weight-' + observation.weight}
-                    >
-                      {signalLabel[observation.weight]}
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                  </li>
+                ))}
+              </ul>
+            )}
           </section>
 
           <aside
@@ -361,40 +431,160 @@ function DossierApp() {
           >
             <header className="dossier-card-head">
               <h2 id="report-heading">сводка</h2>
-              <span className="dossier-card-counter">черновик</span>
+              <span className="dossier-card-counter">
+                {isReportSubmitted && view.report ? 'подана' : 'черновик'}
+              </span>
             </header>
-            <p className="dossier-report-summary">{view.riskStatement}</p>
-            <h3 className="dossier-report-subheading">возможные исходы</h3>
-            <ul className="dossier-report-list">
-              {view.outcomes.map((outcome) => (
-                <li key={outcome.id}>
-                  <strong>{outcome.title}.</strong> {outcome.summary}
-                </li>
-              ))}
-            </ul>
-            {view.debrief.length > 0 && (
+
+            {isReportSubmitted && view.report ? (
               <>
-                <h3 className="dossier-report-subheading">справочник</h3>
-                <ul className="dossier-report-debrief">
-                  {view.debrief.map((term) => (
-                    <li key={term.id}>
-                      <strong>{term.term}.</strong> {term.shortExplanation}
+                <h3 className="dossier-report-outcome-title">
+                  {view.report.title}
+                </h3>
+                <p className="dossier-report-summary">{view.report.summary}</p>
+                <p className="dossier-report-framing">
+                  <span className="dossier-report-framing-label">
+                    рекомендуемая подача
+                  </span>
+                  {view.report.recommendedFraming}
+                </p>
+                <ul className="dossier-report-list">
+                  {view.report.confirmedPatternTitles.length > 0 && (
+                    <li>
+                      <strong>подтверждённые связи</strong>
+                      {view.report.confirmedPatternTitles.join(', ')}
+                    </li>
+                  )}
+                  {view.report.supportedPatternTitles.length > 0 && (
+                    <li>
+                      <strong>промежуточные связи</strong>
+                      {view.report.supportedPatternTitles.join(', ')}
+                    </li>
+                  )}
+                  {view.report.suspectedPatternTitles.length > 0 && (
+                    <li>
+                      <strong>слабые связи</strong>
+                      {view.report.suspectedPatternTitles.join(', ')}
+                    </li>
+                  )}
+                  {view.report.contradictedPatternTitles.length > 0 && (
+                    <li>
+                      <strong>с противоречиями</strong>
+                      {view.report.contradictedPatternTitles.join(', ')}
+                    </li>
+                  )}
+                  {view.report.strongestFragmentTexts.length > 0 && (
+                    <li>
+                      <strong>опорные фрагменты</strong>
+                      <ul className="dossier-report-fragments">
+                        {view.report.strongestFragmentTexts.map((text) => (
+                          <li key={text}>«{text}»</li>
+                        ))}
+                      </ul>
+                    </li>
+                  )}
+                  {view.report.gapPatternTitles.length > 0 && (
+                    <li>
+                      <strong>пробелы</strong>
+                      {view.report.gapPatternTitles.join(', ')}
+                    </li>
+                  )}
+                </ul>
+                {view.report.notes.length > 0 && (
+                  <ul className="dossier-report-notes">
+                    {view.report.notes.map((note) => (
+                      <li key={note}>{note}</li>
+                    ))}
+                  </ul>
+                )}
+                <p className="dossier-report-meta">
+                  материалы дела: {view.caseId} · исход:{' '}
+                  {view.report.outcomeId}
+                </p>
+                <div className="dossier-report-actions">
+                  <button
+                    type="button"
+                    className="dossier-report-submit"
+                    onClick={submitReport}
+                    disabled={!canSubmitReport}
+                  >
+                    обновить сводку
+                  </button>
+                  <button
+                    type="button"
+                    className="dossier-report-reset"
+                    onClick={resetInvestigation}
+                  >
+                    сбросить материалы
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="dossier-report-summary">{view.riskStatement}</p>
+                <p className="dossier-report-status">
+                  отмечено фрагментов:{' '}
+                  <strong>{view.selectionSummary.selectedCount}</strong>{' '}
+                  · подтверждённых связей:{' '}
+                  <strong>
+                    {view.selectionSummary.confirmedPatternCount}
+                  </strong>
+                </p>
+                <p className="dossier-report-status-hint">
+                  {selectedCount === 0
+                    ? 'Откройте материал и поставьте закладку, чтобы собрать сводку.'
+                    : view.selectionSummary.confirmedPatternCount === 0
+                      ? 'Ни одна связь пока не подтверждена. Сводку можно сформировать как раннюю фиксацию.'
+                      : 'Связи подтверждены, сводку можно подавать.'}
+                </p>
+                <h3 className="dossier-report-subheading">возможные исходы</h3>
+                <ul className="dossier-report-list">
+                  {view.outcomes.map((outcome) => (
+                    <li key={outcome.id}>
+                      <strong>{outcome.title}.</strong> {outcome.summary}
                     </li>
                   ))}
                 </ul>
+                {view.debrief.length > 0 && (
+                  <>
+                    <h3 className="dossier-report-subheading">справочник</h3>
+                    <ul className="dossier-report-debrief">
+                      {view.debrief.map((term) => (
+                        <li key={term.id}>
+                          <strong>{term.term}.</strong> {term.shortExplanation}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                <div className="dossier-report-actions">
+                  <button
+                    type="button"
+                    className="dossier-report-submit"
+                    onClick={submitReport}
+                    disabled={!canSubmitReport}
+                  >
+                    сформировать сводку
+                  </button>
+                  <button
+                    type="button"
+                    className="dossier-report-reset"
+                    onClick={resetInvestigation}
+                    disabled={selectedCount === 0}
+                  >
+                    сбросить материалы
+                  </button>
+                </div>
               </>
             )}
-            <button type="button" className="dossier-report-submit" disabled>
-              подать сводку (разбор фрагментов появится позже)
-            </button>
           </aside>
         </div>
       </main>
 
       <footer className="dossier-footer">
         <p>
-          Демо-оболочка расследования. Данные дела — вымышленные, маркировка
-          фрагментов и подача сводки появятся в следующем PR.
+          Демо-оболочка работы с материалами. Данные дела вымышленные;
+          сводка собирается из закладок, поставленных в материалах.
         </p>
       </footer>
     </div>

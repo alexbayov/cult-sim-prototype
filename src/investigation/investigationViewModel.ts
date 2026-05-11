@@ -1,17 +1,22 @@
 // Adapter: converts the canonical InvestigationContent (PR #12) into the
 // view-model that DossierApp renders.
 //
-// The view-model is intentionally narrow and presentational. It does NOT
-// carry runtime state (selected fragments, confirmed patterns, drafted
-// report). Adding that is a follow-up (PR #10 adaptation).
+// Two layers of behaviour are exposed:
+//   - The base view-model (sources, fragments, patterns, persons, timeline,
+//     etc.) is purely a presentational projection of the static case content.
+//   - On top of that, an optional `Selection` snapshot drives runtime state:
+//     which fragments are marked, which materials have been unlocked by those
+//     marks, which signals are now considered confirmed, and what summary
+//     would land if the user submitted the case right now.
 //
 // Visible labels here follow the language guidance from the Dev E brief:
 //   - sources are referred to as "материалы";
-//   - evidence fragments are referred to as "наблюдения" / "фрагменты";
+//   - evidence fragments are referred to as "наблюдения" / "фрагменты" /
+//     "закладки" once marked;
 //   - patterns are referred to as "связи" / "повторяющиеся сигналы";
-//   - report draft is referred to as "сводка".
-// We intentionally avoid `улика`, `доказательство`, and `love bombing` as
-// primary visible labels.
+//   - the report is referred to as "сводка".
+// We intentionally avoid `улика`, `доказательство`, `паттерн`, and
+// `love bombing` as primary visible labels.
 
 import type {
   CasePerson,
@@ -29,6 +34,23 @@ export type ReliabilityLevel = 'low' | 'medium' | 'high'
 export type RiskBucket = 'low' | 'medium' | 'high' | 'critical'
 export type SignalLevel = 'low' | 'medium' | 'high'
 
+export type ConnectionStatus =
+  | 'unmarked'
+  | 'weak'
+  | 'partial'
+  | 'strong'
+  | 'contradicted'
+
+export type Selection = {
+  selectedFragmentIds: ReadonlySet<string>
+  reportSubmitted: boolean
+}
+
+export const emptySelection: Selection = {
+  selectedFragmentIds: new Set<string>(),
+  reportSubmitted: false,
+}
+
 export type DossierViewMaterial = {
   id: string
   typeLabel: string
@@ -37,6 +59,8 @@ export type DossierViewMaterial = {
   origin: string
   reliability: ReliabilityLevel
   reliabilityScore: number
+  locked: boolean
+  lockedHint: string | null
 }
 
 export type DossierViewFragment = {
@@ -45,6 +69,8 @@ export type DossierViewFragment = {
   speaker: string
   text: string
   highlighted: boolean
+  selected: boolean
+  unlocksHint: string | null
 }
 
 export type DossierViewPerson = {
@@ -66,6 +92,10 @@ export type DossierViewPattern = {
   strongSignals: number
   weakSignals: number
   signalLevel: SignalLevel
+  connectionStatus: ConnectionStatus
+  markedCount: number
+  targetCount: number
+  contradictedCount: number
 }
 
 export type DossierViewObservation = {
@@ -105,6 +135,29 @@ export type DossierViewProgressChip = {
   value: string
 }
 
+export type DossierViewReport = {
+  outcomeId: string
+  title: string
+  summary: string
+  recommendedFraming: string
+  notes: string[]
+  confirmedPatternTitles: string[]
+  supportedPatternTitles: string[]
+  suspectedPatternTitles: string[]
+  contradictedPatternTitles: string[]
+  strongestFragmentTexts: string[]
+  gapPatternTitles: string[]
+}
+
+export type DossierViewSelectionSummary = {
+  selectedCount: number
+  visibleFragmentCount: number
+  unlockedMaterialCount: number
+  totalMaterialCount: number
+  confirmedPatternCount: number
+  totalPatternCount: number
+}
+
 export type DossierView = {
   number: string
   caseId: string
@@ -120,11 +173,14 @@ export type DossierView = {
   fragmentsBySource: Record<string, DossierViewFragment[]>
   activeMaterialId: string
   observations: DossierViewObservation[]
+  selectedObservations: DossierViewObservation[]
   persons: DossierViewPerson[]
   patterns: DossierViewPattern[]
   timeline: DossierViewTimelineEvent[]
   outcomes: DossierViewOutcome[]
   debrief: DossierViewDebriefTerm[]
+  selectionSummary: DossierViewSelectionSummary
+  report: DossierViewReport | null
 }
 
 const SOURCE_TYPE_LABELS: Record<SourceType, string> = {
@@ -222,19 +278,106 @@ function dossierNumberFor(caseId: string, year: string): string {
   return `${code || 'CASE'}-${year}/01`
 }
 
+function computeUnlockedMaterialIds(
+  content: InvestigationContent,
+  selection: Selection,
+): { unlocked: Set<string>; lockedHintBySource: Map<string, string> } {
+  const initial = new Set<string>(content.case.initialSourceIds)
+  const unlocked = new Set<string>()
+  for (const s of content.sources) {
+    if (initial.has(s.id) || s.unlockedByEvidenceIds.length === 0) {
+      unlocked.add(s.id)
+    }
+  }
+  // Bidirectional unlock: a selected fragment can list `unlocksSourceIds`,
+  // and a source can list `unlockedByEvidenceIds` — honour both.
+  for (const id of selection.selectedFragmentIds) {
+    const ev = content.evidence.find((e) => e.id === id)
+    if (!ev) continue
+    for (const sid of ev.unlocksSourceIds) unlocked.add(sid)
+  }
+  for (const s of content.sources) {
+    if (unlocked.has(s.id)) continue
+    if (
+      s.unlockedByEvidenceIds.some((eid) =>
+        selection.selectedFragmentIds.has(eid),
+      )
+    ) {
+      unlocked.add(s.id)
+    }
+  }
+
+  const evidenceById = new Map(content.evidence.map((e) => [e.id, e]))
+  const sourceById = new Map(content.sources.map((s) => [s.id, s]))
+  const lockedHintBySource = new Map<string, string>()
+  for (const s of content.sources) {
+    if (unlocked.has(s.id)) continue
+    const sources = new Set<string>()
+    for (const eid of s.unlockedByEvidenceIds) {
+      const ev = evidenceById.get(eid)
+      if (!ev) continue
+      const src = sourceById.get(ev.sourceId)
+      if (src) sources.add(src.title)
+    }
+    if (sources.size > 0) {
+      const list = Array.from(sources).join(', ')
+      lockedHintBySource.set(s.id, `откроется через фрагмент из: ${list}`)
+    } else {
+      lockedHintBySource.set(s.id, 'закрытый материал')
+    }
+  }
+  return { unlocked, lockedHintBySource }
+}
+
+function computePatternConnection(
+  pattern: ControlPattern,
+  selection: Selection,
+): {
+  status: ConnectionStatus
+  marked: number
+  contradicted: number
+} {
+  const sel = selection.selectedFragmentIds
+  const strong = pattern.strongEvidenceIds.filter((id) => sel.has(id)).length
+  const weak = pattern.weakEvidenceIds.filter((id) => sel.has(id)).length
+  const counter = pattern.counterEvidenceIds.filter((id) => sel.has(id)).length
+  if (counter > 0) {
+    return { status: 'contradicted', marked: strong + weak, contradicted: counter }
+  }
+  const linked = strong + weak
+  if (linked === 0) return { status: 'unmarked', marked: 0, contradicted: 0 }
+  if (strong >= pattern.requiredEvidenceCount && pattern.requiredEvidenceCount > 0) {
+    return { status: 'strong', marked: linked, contradicted: 0 }
+  }
+  if (strong === 0) return { status: 'weak', marked: linked, contradicted: 0 }
+  return { status: 'partial', marked: linked, contradicted: 0 }
+}
+
 function buildFragmentsBySource(
-  evidence: EvidenceFragment[],
+  content: InvestigationContent,
+  selection: Selection,
 ): Record<string, DossierViewFragment[]> {
+  const sourceById = new Map(content.sources.map((s) => [s.id, s]))
   const byId: Record<string, DossierViewFragment[]> = {}
-  for (const e of evidence) {
+  for (const e of content.evidence) {
     if (!e.defaultVisible) continue
     if (e.isRedHerring) continue
+    const unlocksHint =
+      e.unlocksSourceIds.length > 0
+        ? e.unlocksSourceIds
+            .map((sid) => sourceById.get(sid)?.title)
+            .filter(Boolean)
+            .map((t) => `открывает материал: ${t}`)
+            .join('; ') || null
+        : null
     const f: DossierViewFragment = {
       id: e.id,
       sourceId: e.sourceId,
       speaker: e.speaker,
       text: e.text,
       highlighted: e.weight >= 4 || e.riskTags.length >= 2,
+      selected: selection.selectedFragmentIds.has(e.id),
+      unlocksHint,
     }
     if (!byId[e.sourceId]) byId[e.sourceId] = []
     byId[e.sourceId].push(f)
@@ -242,7 +385,33 @@ function buildFragmentsBySource(
   return byId
 }
 
-function buildObservations(
+function makeObservation(
+  e: EvidenceFragment,
+  sourceById: Map<string, CaseSource>,
+  personById: Map<string, CasePerson>,
+  patternById: Map<string, ControlPattern>,
+): DossierViewObservation {
+  const source = sourceById.get(e.sourceId)
+  const linkedPerson = e.linksToPersonIds
+    .map((id) => personById.get(id))
+    .find((p): p is CasePerson => Boolean(p))
+  const linkedPattern = e.suggestedPatternIds
+    .map((id) => patternById.get(id))
+    .find((p): p is ControlPattern => Boolean(p))
+  return {
+    id: e.id,
+    sourceId: e.sourceId,
+    sourceLabel: source?.title ?? e.sourceId,
+    text: e.text,
+    speaker: e.speaker,
+    linkedPersonName: linkedPerson?.name ?? null,
+    linkedPatternTitle: linkedPattern?.title ?? null,
+    reliability: reliabilityBucket(e.reliability),
+    weight: weightBucket(e.weight),
+  }
+}
+
+function buildPreviewObservations(
   evidence: EvidenceFragment[],
   sourceById: Map<string, CaseSource>,
   personById: Map<string, CasePerson>,
@@ -257,31 +426,34 @@ function buildObservations(
       return b.reliability - a.reliability
     })
     .slice(0, limit)
-  return ranked.map((e) => {
-    const source = sourceById.get(e.sourceId)
-    const linkedPerson = e.linksToPersonIds
-      .map((id) => personById.get(id))
-      .find((p): p is CasePerson => Boolean(p))
-    const linkedPattern = e.suggestedPatternIds
-      .map((id) => patternById.get(id))
-      .find((p): p is ControlPattern => Boolean(p))
-    return {
-      id: e.id,
-      sourceId: e.sourceId,
-      sourceLabel: source?.title ?? e.sourceId,
-      text: e.text,
-      speaker: e.speaker,
-      linkedPersonName: linkedPerson?.name ?? null,
-      linkedPatternTitle: linkedPattern?.title ?? null,
-      reliability: reliabilityBucket(e.reliability),
-      weight: weightBucket(e.weight),
+  return ranked.map((e) => makeObservation(e, sourceById, personById, patternById))
+}
+
+function buildSelectedObservations(
+  content: InvestigationContent,
+  selection: Selection,
+  sourceById: Map<string, CaseSource>,
+  personById: Map<string, CasePerson>,
+  patternById: Map<string, ControlPattern>,
+): DossierViewObservation[] {
+  const out: DossierViewObservation[] = []
+  for (const e of content.evidence) {
+    if (!selection.selectedFragmentIds.has(e.id)) continue
+    out.push(makeObservation(e, sourceById, personById, patternById))
+  }
+  out.sort((a, b) => {
+    const weightOrder: Record<SignalLevel, number> = { high: 0, medium: 1, low: 2 }
+    if (weightOrder[a.weight] !== weightOrder[b.weight]) {
+      return weightOrder[a.weight] - weightOrder[b.weight]
     }
+    return 0
   })
+  return out
 }
 
 function buildTimeline(
-  evidence: EvidenceFragment[],
-  sources: CaseSource[],
+  content: InvestigationContent,
+  selection: Selection,
   limit: number,
 ): DossierViewTimelineEvent[] {
   type RawEvent = {
@@ -293,31 +465,55 @@ function buildTimeline(
     sortKey: number
   }
   const events: RawEvent[] = []
-  for (const s of sources) {
-    events.push({
-      id: 'src_' + s.id,
-      date: formatShortDate(s.date),
-      label: 'материал зафиксирован: ' + s.title.toLowerCase(),
-      note: s.origin,
-      tone: 'neutral',
-      sortKey: Date.parse(s.date) || 0,
-    })
+
+  const hasSelection = selection.selectedFragmentIds.size > 0
+  if (!hasSelection) {
+    for (const s of content.sources) {
+      events.push({
+        id: 'src_' + s.id,
+        date: formatShortDate(s.date),
+        label: 'материал зафиксирован: ' + s.title.toLowerCase(),
+        note: s.origin,
+        tone: 'neutral',
+        sortKey: Date.parse(s.date) || 0,
+      })
+    }
+    const strong = content.evidence
+      .filter((e) => e.defaultVisible && !e.isRedHerring && e.weight >= 4)
+      .slice()
+      .sort((a, b) => (Date.parse(a.date) || 0) - (Date.parse(b.date) || 0))
+    for (const e of strong) {
+      const isRisky = e.riskTags.length >= 1
+      events.push({
+        id: 'ev_' + e.id,
+        date: formatShortDate(e.date),
+        label:
+          'наблюдение: ' + (e.speaker ? e.speaker.toLowerCase() : 'материал'),
+        note: e.text,
+        tone: isRisky ? 'risk' : 'warning',
+        sortKey: Date.parse(e.date) || 0,
+      })
+    }
+  } else {
+    const selected = content.evidence.filter((e) =>
+      selection.selectedFragmentIds.has(e.id),
+    )
+    selected.sort((a, b) => (Date.parse(a.date) || 0) - (Date.parse(b.date) || 0))
+    for (const e of selected) {
+      const isRisky = e.riskTags.length >= 1
+      const isStrong = e.weight >= 4
+      events.push({
+        id: 'ev_' + e.id,
+        date: formatShortDate(e.date),
+        label:
+          'закладка: ' + (e.speaker ? e.speaker.toLowerCase() : 'материал'),
+        note: e.text,
+        tone: isRisky ? 'risk' : isStrong ? 'warning' : 'neutral',
+        sortKey: Date.parse(e.date) || 0,
+      })
+    }
   }
-  const strong = evidence
-    .filter((e) => e.defaultVisible && !e.isRedHerring && e.weight >= 4)
-    .slice()
-    .sort((a, b) => (Date.parse(a.date) || 0) - (Date.parse(b.date) || 0))
-  for (const e of strong) {
-    const isRisky = e.riskTags.length >= 1
-    events.push({
-      id: 'ev_' + e.id,
-      date: formatShortDate(e.date),
-      label: 'наблюдение: ' + (e.speaker ? e.speaker.toLowerCase() : 'материал'),
-      note: e.text,
-      tone: isRisky ? 'risk' : 'warning',
-      sortKey: Date.parse(e.date) || 0,
-    })
-  }
+
   events.sort((a, b) => a.sortKey - b.sortKey)
   return events.slice(0, limit).map((event) => ({
     id: event.id,
@@ -344,11 +540,125 @@ function buildDebrief(debrief: DebriefEntry[], limit: number): DossierViewDebrie
   }))
 }
 
-export function buildDossierView(content: InvestigationContent): DossierView {
+function pickOutcome(
+  outcomes: ReportOutcome[],
+  confirmedPatternIds: ReadonlySet<string>,
+  hasRedHerring: boolean,
+): ReportOutcome | null {
+  if (outcomes.length === 0) return null
+  const eligible = outcomes.filter(
+    (o) =>
+      o.requiredPatternIds.every((id) => confirmedPatternIds.has(id)) &&
+      !o.forbiddenPatternIds.some((id) => confirmedPatternIds.has(id)) &&
+      o.minPatternConfirmedCount <= confirmedPatternIds.size,
+  )
+  if (eligible.length === 0) return outcomes[0]
+
+  eligible.sort((a, b) => {
+    if (a.minPatternConfirmedCount !== b.minPatternConfirmedCount) {
+      return b.minPatternConfirmedCount - a.minPatternConfirmedCount
+    }
+    if (a.requiredPatternIds.length !== b.requiredPatternIds.length) {
+      return b.requiredPatternIds.length - a.requiredPatternIds.length
+    }
+    return 0
+  })
+
+  const pick = eligible[0]
+
+  if (
+    hasRedHerring &&
+    confirmedPatternIds.size === 0 &&
+    pick.minPatternConfirmedCount === 0
+  ) {
+    const misread = outcomes.find(
+      (o) =>
+        o.id === 'ro_misread' &&
+        !o.forbiddenPatternIds.some((id) => confirmedPatternIds.has(id)),
+    )
+    if (misread) return misread
+  }
+
+  return pick
+}
+
+function buildReport(
+  content: InvestigationContent,
+  selection: Selection,
+  patternConnections: Map<string, ConnectionStatus>,
+  patternById: Map<string, ControlPattern>,
+): DossierViewReport | null {
+  if (!selection.reportSubmitted) return null
+
+  const confirmedIds = new Set<string>()
+  const supported: string[] = []
+  const suspected: string[] = []
+  const contradicted: string[] = []
+  const gaps: string[] = []
+
+  for (const p of content.patterns) {
+    const status = patternConnections.get(p.id) ?? 'unmarked'
+    if (status === 'strong') confirmedIds.add(p.id)
+    if (status === 'partial') supported.push(p.title)
+    if (status === 'weak') suspected.push(p.title)
+    if (status === 'contradicted') contradicted.push(p.title)
+    if (status === 'unmarked') gaps.push(p.title)
+  }
+
+  const confirmedTitles = Array.from(confirmedIds)
+    .map((id) => patternById.get(id)?.title ?? id)
+    .filter(Boolean)
+
+  const redHerringSelected = content.evidence.some(
+    (e) => selection.selectedFragmentIds.has(e.id) && e.isRedHerring,
+  )
+
+  const outcome = pickOutcome(
+    content.report.outcomes,
+    confirmedIds,
+    redHerringSelected,
+  )
+  if (!outcome) return null
+
+  const strongestFragmentTexts: string[] = content.evidence
+    .filter(
+      (e) =>
+        selection.selectedFragmentIds.has(e.id) &&
+        !e.isRedHerring &&
+        e.weight >= 3,
+    )
+    .sort((a, b) => b.weight - a.weight || b.reliability - a.reliability)
+    .slice(0, 3)
+    .map((e) => e.text)
+
+  return {
+    outcomeId: outcome.id,
+    title: outcome.title,
+    summary: outcome.summary,
+    recommendedFraming: outcome.recommendedFraming,
+    notes: outcome.notes,
+    confirmedPatternTitles: confirmedTitles,
+    supportedPatternTitles: supported,
+    suspectedPatternTitles: suspected,
+    contradictedPatternTitles: contradicted,
+    strongestFragmentTexts,
+    gapPatternTitles: gaps,
+  }
+}
+
+export function buildDossierView(
+  content: InvestigationContent,
+  selection: Selection = emptySelection,
+): DossierView {
   const { case: c, persons, sources, evidence, patterns, report, debrief } = content
   const sourceById = new Map(sources.map((s) => [s.id, s]))
   const personById = new Map(persons.map((p) => [p.id, p]))
   const patternById = new Map(patterns.map((p) => [p.id, p]))
+
+  const { unlocked: unlockedIds, lockedHintBySource } = computeUnlockedMaterialIds(
+    content,
+    selection,
+  )
 
   const materials: DossierViewMaterial[] = sources.map((s) => ({
     id: s.id,
@@ -358,15 +668,24 @@ export function buildDossierView(content: InvestigationContent): DossierView {
     origin: s.origin,
     reliability: reliabilityBucket(s.reliability),
     reliabilityScore: s.reliability,
+    locked: !unlockedIds.has(s.id),
+    lockedHint: unlockedIds.has(s.id) ? null : lockedHintBySource.get(s.id) ?? null,
   }))
 
-  const fragmentsBySource = buildFragmentsBySource(evidence)
-  const observations = buildObservations(
+  const fragmentsBySource = buildFragmentsBySource(content, selection)
+  const observations = buildPreviewObservations(
     evidence,
     sourceById,
     personById,
     patternById,
     4,
+  )
+  const selectedObservations = buildSelectedObservations(
+    content,
+    selection,
+    sourceById,
+    personById,
+    patternById,
   )
 
   const personsView: DossierViewPerson[] = persons.map((p) => ({
@@ -381,9 +700,12 @@ export function buildDossierView(content: InvestigationContent): DossierView {
     credibility: p.credibility,
   }))
 
+  const patternConnections = new Map<string, ConnectionStatus>()
   const patternsView: DossierViewPattern[] = patterns.map((p) => {
     const strong = p.strongEvidenceIds.length
     const weak = p.weakEvidenceIds.length
+    const conn = computePatternConnection(p, selection)
+    patternConnections.set(p.id, conn.status)
     return {
       id: p.id,
       title: p.title,
@@ -391,10 +713,14 @@ export function buildDossierView(content: InvestigationContent): DossierView {
       strongSignals: strong,
       weakSignals: weak,
       signalLevel: signalLevelFromCounts(strong, weak),
+      connectionStatus: conn.status,
+      markedCount: conn.marked,
+      targetCount: p.requiredEvidenceCount,
+      contradictedCount: conn.contradicted,
     }
   })
 
-  const timeline = buildTimeline(evidence, sources, 6)
+  const timeline = buildTimeline(content, selection, 6)
   const outcomes = buildOutcomes(report.outcomes)
   const debriefView = buildDebrief(debrief, 6)
 
@@ -406,16 +732,33 @@ export function buildDossierView(content: InvestigationContent): DossierView {
   const visibleEvidenceCount = evidence.filter(
     (e) => e.defaultVisible && !e.isRedHerring,
   ).length
+  const selectedCount = selection.selectedFragmentIds.size
+  const unlockedMaterialCount = materials.filter((m) => !m.locked).length
+  const confirmedPatternCount = patternsView.filter(
+    (p) => p.connectionStatus === 'strong',
+  ).length
 
   const progressChips: DossierViewProgressChip[] = [
-    { label: 'материалов', value: String(sources.length) },
-    { label: 'фрагментов в обзоре', value: String(visibleEvidenceCount) },
-    { label: 'наблюдений под отслеживанием', value: String(patterns.length) },
+    {
+      label: 'материалов',
+      value: `${unlockedMaterialCount} / ${materials.length}`,
+    },
+    {
+      label: 'фрагментов в обзоре',
+      value: `${selectedCount} / ${visibleEvidenceCount}`,
+    },
+    {
+      label: 'наблюдений под отслеживанием',
+      value: `${confirmedPatternCount} подтв. / ${patterns.length}`,
+    },
     { label: 'людей', value: String(persons.length) },
   ]
 
+  const reportView = buildReport(content, selection, patternConnections, patternById)
+
   const activeMaterialId =
-    c.initialSourceIds.find((id) => sourceById.has(id)) ??
+    c.initialSourceIds.find((id) => sourceById.has(id) && unlockedIds.has(id)) ??
+    sources.find((s) => unlockedIds.has(s.id))?.id ??
     sources[0]?.id ??
     ''
 
@@ -434,10 +777,20 @@ export function buildDossierView(content: InvestigationContent): DossierView {
     fragmentsBySource,
     activeMaterialId,
     observations,
+    selectedObservations,
     persons: personsView,
     patterns: patternsView,
     timeline,
     outcomes,
     debrief: debriefView,
+    selectionSummary: {
+      selectedCount,
+      visibleFragmentCount: visibleEvidenceCount,
+      unlockedMaterialCount,
+      totalMaterialCount: materials.length,
+      confirmedPatternCount,
+      totalPatternCount: patterns.length,
+    },
+    report: reportView,
   }
 }
