@@ -54,6 +54,7 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
     selectedCount,
     isReportSubmitted,
     canSubmitReport,
+    resolution,
     selectMaterial,
     toggleFragment,
     submitReport,
@@ -606,10 +607,254 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
         </div>
       </main>
 
+      {isReportSubmitted && resolution && (
+        <section
+          className="dossier-resolution"
+          aria-labelledby="resolution-heading"
+        >
+          <header className="dossier-resolution-head">
+            <h2 id="resolution-heading">разбор</h2>
+            <p className="dossier-resolution-sub">
+              {resolution.outcomeTitle
+                ? `рамка сводки: ${resolution.outcomeTitle}`
+                : 'сводка собрана'}
+            </p>
+          </header>
+
+          <div className="dossier-resolution-metrics">
+            {resolution.metrics.map((m) => (
+              <article
+                key={m.key}
+                className={'dossier-metric is-' + m.key}
+                title={m.description}
+              >
+                <header>
+                  <span className="dossier-metric-label">{m.label}</span>
+                  <span className="dossier-metric-value">{m.value}</span>
+                </header>
+                <div
+                  className="dossier-metric-bar"
+                  role="img"
+                  aria-label={`${m.label}: ${m.value} из 100`}
+                >
+                  <div
+                    className="dossier-metric-bar-fill"
+                    style={{ width: `${m.value}%` }}
+                  />
+                </div>
+                <p className="dossier-metric-desc">{m.description}</p>
+              </article>
+            ))}
+          </div>
+
+          <div className="dossier-resolution-stats">
+            <div>
+              <dt>открытых материалов</dt>
+              <dd>
+                {resolution.openedSourceCount} из{' '}
+                {resolution.totalSourceCount}
+              </dd>
+            </div>
+            <div>
+              <dt>фрагментов в закладках</dt>
+              <dd>{resolution.selectedFragmentCount}</dd>
+            </div>
+            <div>
+              <dt>видимых материалов</dt>
+              <dd>
+                {resolution.visibleSourceCount} из{' '}
+                {resolution.totalSourceCount}
+              </dd>
+            </div>
+          </div>
+
+          <div className="dossier-resolution-grid">
+            <article className="dossier-resolution-card is-visible">
+              <h3>что уже видно</h3>
+              {resolution.strongObservations.length === 0 &&
+              resolution.supportedObservations.length === 0 ? (
+                <p className="dossier-resolution-empty">
+                  По текущим закладкам связи пока не подкреплены.
+                </p>
+              ) : (
+                <ul className="dossier-resolution-list">
+                  {resolution.strongObservations.map((o) => (
+                    <li key={o.id}>
+                      <span className="dossier-resolution-tag is-strong">
+                        подкреплено
+                      </span>
+                      {o.title}
+                    </li>
+                  ))}
+                  {resolution.supportedObservations.map((o) => (
+                    <li key={o.id}>
+                      <span className="dossier-resolution-tag is-supported">
+                        промежуточно
+                      </span>
+                      {o.title}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
+
+            <article className="dossier-resolution-card is-weak">
+              <h3>что пока слабо</h3>
+              {resolution.weakObservations.length === 0 ? (
+                <p className="dossier-resolution-empty">
+                  Слабых связей в подборке нет.
+                </p>
+              ) : (
+                <ul className="dossier-resolution-list">
+                  {resolution.weakObservations.map((o) => (
+                    <li key={o.id}>
+                      <span className="dossier-resolution-tag is-weak">
+                        слабый сигнал
+                      </span>
+                      {o.title}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
+
+            <article className="dossier-resolution-card is-contradicted">
+              <h3>что противоречит версии</h3>
+              {resolution.contradictedObservations.length === 0 ? (
+                <p className="dossier-resolution-empty">
+                  Прямых противоречий в закладках нет.
+                </p>
+              ) : (
+                <ul className="dossier-resolution-list">
+                  {resolution.contradictedObservations.map((o) => (
+                    <li key={o.id}>
+                      <span className="dossier-resolution-tag is-contradicted">
+                        противоречие
+                      </span>
+                      {o.title}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
+
+            <article className="dossier-resolution-card is-noise">
+              <h3>что было шумом</h3>
+              {resolution.noiseFragments.length === 0 ? (
+                <p className="dossier-resolution-empty">
+                  Красных селёдок в подборке не найдено.
+                </p>
+              ) : (
+                <ul className="dossier-resolution-list">
+                  {resolution.noiseFragments.map((f) => (
+                    <li key={f.id}>
+                      <span className="dossier-resolution-tag is-noise">
+                        шум
+                      </span>
+                      <p className="dossier-resolution-fragment-text">
+                        «{f.text}»
+                      </p>
+                      <p className="dossier-resolution-fragment-meta">
+                        {f.sourceLabel}
+                        {f.speaker ? ` · ${f.speaker}` : ''}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
+
+            <article className="dossier-resolution-card is-todo">
+              <h3>что можно было ещё проверить</h3>
+              {resolution.missedStrongTopics.length === 0 ? (
+                <p className="dossier-resolution-empty">
+                  Опорные фрагменты по основным связям взяты в работу.
+                </p>
+              ) : (
+                <ul className="dossier-resolution-list">
+                  {resolution.missedStrongTopics.map((o) => (
+                    <li key={o.id}>
+                      <span className="dossier-resolution-tag is-todo">
+                        тема
+                      </span>
+                      {o.title}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </article>
+
+            {resolution.protectiveObservations.length > 0 && (
+              <article className="dossier-resolution-card is-protective">
+                <h3>внешние опоры</h3>
+                <ul className="dossier-resolution-list">
+                  {resolution.protectiveObservations.map((o) => (
+                    <li key={o.id}>
+                      <span className="dossier-resolution-tag is-protective">
+                        замечено
+                      </span>
+                      {o.title}
+                    </li>
+                  ))}
+                </ul>
+              </article>
+            )}
+          </div>
+
+          <section
+            className="dossier-resolution-achievements"
+            aria-labelledby="achievements-heading"
+          >
+            <header>
+              <h3 id="achievements-heading">профиль работы</h3>
+              <span className="dossier-resolution-achievements-counter">
+                {resolution.achievements.filter((a) => a.earned).length}{' '}
+                из {resolution.achievements.length}
+              </span>
+            </header>
+            <ul>
+              {resolution.achievements.map((a) => (
+                <li
+                  key={a.id}
+                  className={
+                    'dossier-achievement' +
+                    (a.earned ? ' is-earned' : ' is-locked')
+                  }
+                >
+                  <div className="dossier-achievement-title">
+                    <span aria-hidden="true">
+                      {a.earned ? '●' : '○'}
+                    </span>
+                    {a.title}
+                  </div>
+                  <p className="dossier-achievement-desc">{a.description}</p>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          {resolution.glossary.length > 0 && (
+            <section
+              className="dossier-resolution-glossary"
+              aria-labelledby="glossary-heading"
+            >
+              <h3 id="glossary-heading">справочник по связям</h3>
+              <ul>
+                {resolution.glossary.map((entry) => (
+                  <li key={entry.id}>
+                    <strong>{entry.term}.</strong> {entry.shortExplanation}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </section>
+      )}
+
       <footer className="dossier-footer">
         <p>
           Демо-оболочка работы с материалами. Данные дела вымышленные;
-          сводка собирается из закладок, поставленных в материалах.
+          сводка и разбор собираются из закладок, поставленных в материалах.
         </p>
       </footer>
     </div>
