@@ -156,6 +156,10 @@ export type DossierViewSelectionSummary = {
   totalMaterialCount: number
   confirmedPatternCount: number
   totalPatternCount: number
+  // Titles of materials that are currently unlocked but were NOT in the
+  // case's `initialSourceIds`. Used by ProgressNudge to name what just
+  // opened up; ordered as in the case's `sources` list for stability.
+  unlockedSinceStartTitles: string[]
 }
 
 export type DossierView = {
@@ -738,6 +742,11 @@ export function buildDossierView(
     (p) => p.connectionStatus === 'strong',
   ).length
 
+  const initialSourceIdSet = new Set<string>(c.initialSourceIds)
+  const unlockedSinceStartTitles = materials
+    .filter((m) => !m.locked && !initialSourceIdSet.has(m.id))
+    .map((m) => m.title)
+
   const progressChips: DossierViewProgressChip[] = [
     {
       label: 'материалов',
@@ -790,6 +799,7 @@ export function buildDossierView(
       totalMaterialCount: materials.length,
       confirmedPatternCount,
       totalPatternCount: patterns.length,
+      unlockedSinceStartTitles,
     },
     report: reportView,
   }
