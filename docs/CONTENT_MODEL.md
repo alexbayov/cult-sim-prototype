@@ -29,11 +29,34 @@ src/game/cases/info-business-marathon/
 
 `src/game/investigation/data.ts` импортирует все семь JSON и собирает единый `InvestigationContent`. При импорте вызывается `validateInvestigationContent` и любые ошибки уходят в `console.error`. Для строгой проверки (с исключением) есть `assertValidInvestigationContent`.
 
-Дополнительно есть `scripts/validate-investigation.mjs` — node-скрипт, который запускает ту же логику без React/Vite. Запуск:
+Дополнительно есть `scripts/validate-investigation.mjs` — node-скрипт, который запускает ту же структурную проверку без React/Vite **плюс** даёт несколько content-design предупреждений. Запуск:
 
 ```bash
 npm run validate:investigation
 ```
+
+Скрипт разделяет проверки на **errors** (валятся, exit 1) и **warnings** (не валятся, exit 0):
+
+**Errors (структура):**
+
+- дубликаты `id` среди persons/sources/evidence/patterns/outcomes/debrief;
+- висячие ссылки (`sourceId`, `linksToPersonIds`, `suggestedPatternIds`, `unlocksSourceIds`, `requiredPatternIds`, `forbiddenPatternIds`, `exampleEvidenceIds`);
+- значения вне диапазонов (`reliability`, `riskLevel`, `influenceLevel`, `credibility` — 0..100; `weight` — 1..5; `requiredEvidenceCount >= 1`);
+- пустые `initialSourceIds` / `initialPersonIds` / `themeTags`;
+- evidence, разблокирующий собственный источник;
+- пересечение `requiredPatternIds` и `forbiddenPatternIds` у одного outcome;
+- `Debrief.exampleEvidenceIds` указывает на несуществующий evidence id.
+
+**Warnings (content-design):**
+
+- *source reachability* — источник не лежит ни в `case.initialSourceIds`, ни в `evidence.unlocksSourceIds`: в обычной партии его невозможно открыть;
+- *empty source display* — у источника нет ни одного `defaultVisible && !isRedHerring` фрагмента: открытие в досье будет выглядеть пустым;
+- *orphan pattern* — у паттерна нет `strongEvidenceIds`/`weakEvidenceIds` и ни один evidence не указывает на него через `suggestedPatternIds`;
+- *missing debrief* — нет debrief-записи, чей id равен `p_X → d_X` или чьи `exampleEvidenceIds` пересекаются с фрагментами паттерна;
+- *missing outcome class* — нет low (`minPatternConfirmedCount === 0`), medium (1 ≤ min < strongThreshold) или strong (min ≥ strongThreshold) outcome;
+- *language regression* — в видимых геймплейных полях (`case.title/subtitle/publicLegend/...`, `source.title/origin`, `evidence.text/speaker`, `pattern.title/shortDescription/fullDescription/debriefText`, `report.outcome.title/summary/recommendedFraming/notes`, person `name/publicDescription/knownFacts`) встречается «первичная» терминология: `улика`, `доказательство`, `ДЕЛО`, `ДОСЬЕ`, `секта`, `love bombing`, `coercive control`, `gaslighting`, `газлайтинг`, а также `паттерн` в кратких видимых заголовках/summary.
+
+Языковые предупреждения **намеренно не валят валидатор**: цель — поймать регрессию неявно, не блокируя контент-итерации. Эти термины разрешены в id, в `debrief.term` и `debrief.longExplanation` (как вторичный образовательный контекст), в документации и комментариях кода.
 
 ### Ключевые сущности
 
