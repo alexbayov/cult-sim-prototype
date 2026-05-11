@@ -54,7 +54,7 @@ function DossierApp() {
 
       <header className="dossier-case-header">
         <div className="dossier-case-tab">
-          <span className="dossier-case-tab-label">ДОСЬЕ</span>
+          <span className="dossier-case-tab-label">МАТЕРИАЛЫ</span>
           <span className="dossier-case-tab-number">№ {caseFile.number}</span>
         </div>
         <div className="dossier-case-stamp" aria-hidden="true">
@@ -68,7 +68,7 @@ function DossierApp() {
             <dd>{caseFile.status}</dd>
           </div>
           <div>
-            <dt>вопрос расследования</dt>
+            <dt>главный вопрос</dt>
             <dd>{caseFile.investigationQuestion}</dd>
           </div>
           <div>
@@ -93,7 +93,7 @@ function DossierApp() {
         <div className="dossier-col dossier-col-left">
           <section className="dossier-card dossier-persons" aria-labelledby="persons-heading">
             <header className="dossier-card-head">
-              <h2 id="persons-heading">люди в деле</h2>
+              <h2 id="persons-heading">люди</h2>
               <span className="dossier-card-counter">{caseFile.persons.length}</span>
             </header>
             <ul className="dossier-persons-list">
@@ -133,7 +133,7 @@ function DossierApp() {
 
           <section className="dossier-card dossier-patterns" aria-labelledby="patterns-heading">
             <header className="dossier-card-head">
-              <h2 id="patterns-heading">паттерны</h2>
+              <h2 id="patterns-heading">наблюдения</h2>
               <span className="dossier-card-counter">
                 {caseFile.patterns.filter((p) => p.status === 'confirmed').length} подтв.
               </span>
@@ -153,7 +153,7 @@ function DossierApp() {
                   <p>{pattern.shortDescription}</p>
                   <div className="dossier-pattern-progress">
                     <span>
-                      улик: {pattern.evidenceCount} / {pattern.requiredEvidence}
+                      связей: {pattern.evidenceCount} / {pattern.requiredEvidence}
                     </span>
                     <div className="dossier-pattern-progress-bar">
                       <div
@@ -231,7 +231,7 @@ function DossierApp() {
                     <p className="dossier-fragment-text">{fragment.text}</p>
                     <div className="dossier-fragment-actions">
                       <button type="button" className="dossier-fragment-mark" disabled>
-                        отметить как улику
+                        сделать закладку
                       </button>
                     </div>
                   </li>
@@ -265,9 +265,9 @@ function DossierApp() {
         <div className="dossier-col dossier-col-right">
           <section className="dossier-card dossier-evidence" aria-labelledby="evidence-heading">
             <header className="dossier-card-head">
-              <h2 id="evidence-heading">улики</h2>
+              <h2 id="evidence-heading">закладки</h2>
               <span className="dossier-card-counter">
-                {caseFile.evidence.length} отмечено
+                {caseFile.evidence.length} собрано
               </span>
             </header>
             <ul className="dossier-evidence-list">
@@ -308,26 +308,26 @@ function DossierApp() {
 
           <aside className="dossier-card dossier-report" aria-labelledby="report-heading">
             <header className="dossier-card-head">
-              <h2 id="report-heading">черновик отчёта</h2>
+              <h2 id="report-heading">черновик сводки</h2>
               <span className="dossier-card-counter">draft</span>
             </header>
             <p className="dossier-report-summary">{caseFile.riskStatement}</p>
             <ul className="dossier-report-list">
               <li>
-                <strong>сильнейшая улика:</strong> «Доступ к закрытому потоку. Возврат не предусмотрен.»
+                <strong>сильнейший фрагмент:</strong> «Доступ к закрытому потоку. Возврат не предусмотрен.»
               </li>
               <li>
-                <strong>подтверждённые паттерны:</strong> изоляция, финансовое давление.
+                <strong>подтверждённые наблюдения:</strong> сужение внешних связей, денежное давление.
               </li>
               <li>
                 <strong>люди в риске:</strong> Аня К. (критический), Илья П. (средний).
               </li>
               <li>
-                <strong>не хватает:</strong> прямого подтверждения петли зависимости.
+                <strong>не хватает:</strong> прямого подтверждения зависимости от группы.
               </li>
             </ul>
             <button type="button" className="dossier-report-submit" disabled>
-              подать отчёт (заблокировано: мало улик)
+              подать сводку (заблокировано: мало закладок)
             </button>
           </aside>
         </div>
@@ -335,7 +335,7 @@ function DossierApp() {
 
       <footer className="dossier-footer">
         <p>
-          Демо-оболочка расследования. Данные — фикция. UI shell, без полной логики выбора улик.
+          Демо-оболочка. Данные — вымысел. UI shell без полной логики работы с фрагментами.
         </p>
       </footer>
     </div>
