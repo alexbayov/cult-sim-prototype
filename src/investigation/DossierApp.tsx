@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
 import './dossier.css'
-import { infoBusinessMarathonInvestigation } from '../game/investigation/data'
+import type { InvestigationContent } from '../game/investigation/types'
 import { useInvestigationState } from './useInvestigationState'
+import ProgressNudge from './ProgressNudge'
 import type {
   ConnectionStatus,
   DossierViewMaterial,
@@ -13,6 +14,11 @@ import type {
   RiskBucket,
   SignalLevel,
 } from './investigationViewModel'
+
+export type DossierAppProps = {
+  content: InvestigationContent
+  onBackToCases?: () => void
+}
 
 const reliabilityLabel: Record<ReliabilityLevel, string> = {
   low: 'низкая',
@@ -41,7 +47,7 @@ const connectionLabel: Record<ConnectionStatus, string> = {
   contradicted: 'противоречие',
 }
 
-function DossierApp() {
+function DossierApp({ content, onBackToCases }: DossierAppProps) {
   const {
     view,
     activeMaterialId,
@@ -52,7 +58,9 @@ function DossierApp() {
     toggleFragment,
     submitReport,
     resetInvestigation,
-  } = useInvestigationState(infoBusinessMarathonInvestigation)
+  } = useInvestigationState(content)
+
+  const initialMaterialCount = content.case.initialSourceIds.length
 
   const activeMaterial: DossierViewMaterial | undefined = useMemo(
     () =>
@@ -76,6 +84,16 @@ function DossierApp() {
   return (
     <div className="dossier-shell">
       <div className="dossier-grain" aria-hidden="true" />
+
+      {onBackToCases && (
+        <button
+          type="button"
+          className="dossier-case-back"
+          onClick={onBackToCases}
+        >
+          ← к выбору материалов
+        </button>
+      )}
 
       <header className="dossier-case-header">
         <div className="dossier-case-tab">
@@ -112,6 +130,13 @@ function DossierApp() {
         <p className="dossier-content-warning">
           <span aria-hidden="true">⚠</span> {view.contentWarning}
         </p>
+        <ProgressNudge
+          selectedCount={selectedCount}
+          unlockedMaterialCount={view.selectionSummary.unlockedMaterialCount}
+          initialMaterialCount={initialMaterialCount}
+          confirmedPatternCount={view.selectionSummary.confirmedPatternCount}
+          isReportSubmitted={isReportSubmitted}
+        />
       </header>
 
       <main className="dossier-grid">
