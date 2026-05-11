@@ -36,6 +36,24 @@
     "unlockedByEvidenceIds": []
   },
   {
+    "id": "s_public_comments",
+    "type": "socialPost",
+    "title": "Комментарии под публичными эфирами",
+    "date": "2025-08-10",
+    "origin": "Открытая лента комментариев под публичными эфирами и постами марафона. Доступ без регистрации.",
+    "reliability": 50,
+    "unlockedByEvidenceIds": []
+  },
+  {
+    "id": "s_calendar_plan",
+    "type": "internalDoc",
+    "title": "Расписание марафона",
+    "date": "2025-08-03",
+    "origin": "Расписание шести недель, разосланное участникам после регистрации. Частично дублируется на лендинге.",
+    "reliability": 70,
+    "unlockedByEvidenceIds": []
+  },
+  {
     "id": "s_testimony_ex",
     "type": "testimony",
     "title": "Свидетельство бывшего участника",
@@ -69,6 +87,17 @@
     ]
   },
   {
+    "id": "s_refund_thread",
+    "type": "chat",
+    "title": "Переписка о возврате и рассрочке",
+    "date": "2025-09-03",
+    "origin": "Переписка участницы с куратором о возврате оплаченного тарифа и рассрочке. Передана через бывшего участника.",
+    "reliability": 75,
+    "unlockedByEvidenceIds": [
+      "e_chat_refund_hint"
+    ]
+  },
+  {
     "id": "s_internal_checklist",
     "type": "internalDoc",
     "title": "Чек-лист куратора",
@@ -77,6 +106,17 @@
     "reliability": 80,
     "unlockedByEvidenceIds": [
       "e_payment_pressure_script"
+    ]
+  },
+  {
+    "id": "s_curator_notes",
+    "type": "internalDoc",
+    "title": "Заметки куратора второго круга",
+    "date": "2025-09-08",
+    "origin": "Рабочая тетрадь куратора закрытого круга. Содержит пометки по конкретным участникам. Подпись «И.С.».",
+    "reliability": 80,
+    "unlockedByEvidenceIds": [
+      "e_checklist_curator_handoff"
     ]
   }
 ]

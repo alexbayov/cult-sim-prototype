@@ -18,7 +18,9 @@
       "s_chat_open",
       "s_chat_closed",
       "s_video_intro",
-      "s_internal_checklist"
+      "s_internal_checklist",
+      "s_public_comments",
+      "s_calendar_plan"
     ],
     "portraitAssetId": "portrait_leader_leonid"
   },
@@ -40,9 +42,32 @@
       "s_chat_open",
       "s_chat_closed",
       "s_payment_memo",
-      "s_internal_checklist"
+      "s_internal_checklist",
+      "s_refund_thread",
+      "s_calendar_plan"
     ],
     "portraitAssetId": "portrait_admin_anna"
+  },
+  {
+    "id": "p_curator_irina",
+    "name": "Ирина С.",
+    "role": "admin",
+    "publicDescription": "Куратор «второго круга» и наставническая роль для отдельных участниц. На публичных площадках не выступает.",
+    "privateNotes": "Подпись «И.С.» в заметках куратора закрытого круга. Ведёт детальный учёт по конкретным людям. Имя в открытом чате почти не появляется.",
+    "knownFacts": [
+      "Отдельно ведёт «работу с сомневающимися».",
+      "Подпись «И.С.» в заметках по участницам.",
+      "Передавала рекомендации Анне Г. по нескольким переходам в наставническую программу."
+    ],
+    "riskLevel": 65,
+    "influenceLevel": 60,
+    "credibility": 45,
+    "sourceIds": [
+      "s_chat_closed",
+      "s_curator_notes",
+      "s_refund_thread"
+    ],
+    "portraitAssetId": "portrait_curator_irina"
   },
   {
     "id": "p_vuln_marina",
@@ -62,7 +87,10 @@
       "s_landing",
       "s_chat_open",
       "s_relative_msg",
-      "s_internal_checklist"
+      "s_internal_checklist",
+      "s_curator_notes",
+      "s_refund_thread",
+      "s_public_comments"
     ],
     "portraitAssetId": "portrait_vuln_marina"
   },
@@ -101,7 +129,8 @@
     "credibility": 40,
     "sourceIds": [
       "s_payment_memo",
-      "s_video_intro"
+      "s_video_intro",
+      "s_public_comments"
     ],
     "portraitAssetId": "portrait_donor_svetlana"
   },
@@ -123,5 +152,26 @@
       "s_relative_msg"
     ],
     "portraitAssetId": "portrait_relative_oleg"
+  },
+  {
+    "id": "p_observer_pavel",
+    "name": "Павел Р.",
+    "role": "expert",
+    "publicDescription": "Внешний наблюдатель: журналист, готовящий материал о марафоне. Не участник, имеет ограниченный доступ к закрытым площадкам.",
+    "privateNotes": "Через него получены свидетельство Дениса К. и часть переписки. Знает контекст рынка инфобизнеса, но не работает внутри группы.",
+    "knownFacts": [
+      "Собирает свидетельства бывших участников.",
+      "Передаёт материалы редакции для проверки.",
+      "Самостоятельно в марафоне не участвовал."
+    ],
+    "riskLevel": 10,
+    "influenceLevel": 35,
+    "credibility": 70,
+    "sourceIds": [
+      "s_testimony_ex",
+      "s_refund_thread",
+      "s_public_comments"
+    ],
+    "portraitAssetId": "portrait_observer_pavel"
   }
 ]

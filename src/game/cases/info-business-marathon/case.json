@@ -8,7 +8,9 @@
     "s_landing",
     "s_chat_open",
     "s_video_intro",
-    "s_relative_msg"
+    "s_relative_msg",
+    "s_public_comments",
+    "s_calendar_plan"
   ],
   "initialPersonIds": [
     "p_leader_leonid",
@@ -16,7 +18,8 @@
     "p_vuln_marina",
     "p_ex_denis",
     "p_donor_svetlana",
-    "p_relative_oleg"
+    "p_relative_oleg",
+    "p_observer_pavel"
   ],
   "riskStatement": "Возможный финансовый и эмоциональный вред уязвимым участникам. Сигналы сужения внешних связей, денежного давления и формирования закрытого «второго круга». Подростки и несовершеннолетние в материалах не задействованы.",
   "contentWarning": "Материалы вымышленные. Тексты описывают манипулятивные практики через косвенные признаки и не содержат инструкций по вовлечению или удержанию людей.",
