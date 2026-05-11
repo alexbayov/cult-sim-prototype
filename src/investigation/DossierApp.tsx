@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import './dossier.css'
 import type { InvestigationContent } from '../game/investigation/types'
 import { useInvestigationState } from './useInvestigationState'
@@ -81,6 +81,48 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
     selectedCount > 0
       ? `${selectedCount} в закладках`
       : `${observationsList.length} наблюдений`
+  // Hint line under the right-panel heading. Spells out *what the panel
+  // is currently showing* so the heading swap between «ключевые
+  // наблюдения» and «закладки» on first bookmark is obvious rather than
+  // silent. See docs/PLAYTEST_UX_REPORT.md §5 #3.
+  const observationsStateHint: string =
+    selectedCount > 0
+      ? `Ваши закладки. Подтверждено связей: ${view.selectionSummary.confirmedPatternCount} / ${view.selectionSummary.totalPatternCount}.`
+      : 'Пока ни одной закладки. Здесь показаны ключевые наблюдения дела. Когда вы сделаете первую закладку, этот блок переключится на вашу подборку.'
+
+  // Pre-submit status hint that aligns with ProgressNudge thresholds
+  // (early summary at 2 confirmed connections, strong at 4). Lives here
+  // because the report aside also needs to read the same numbers.
+  const confirmedPatternCount = view.selectionSummary.confirmedPatternCount
+  const reportStatusHint: string = (() => {
+    if (selectedCount === 0) {
+      return 'Откройте материал и поставьте закладку, чтобы собрать сводку.'
+    }
+    if (confirmedPatternCount >= 4) {
+      return 'Связей достаточно для сильной сводки.'
+    }
+    if (confirmedPatternCount >= 2) {
+      const remaining = 4 - confirmedPatternCount
+      const wordForm = remaining === 1 ? 'связь' : 'связи'
+      return `Раннюю сводку уже можно подать. Для сильной нужно ещё ${remaining} ${wordForm}.`
+    }
+    return 'Ни одна связь пока не подтверждена. Сводку можно сформировать как раннюю фиксацию.'
+  })()
+
+  // Inline confirmation for the destructive reset button: first click
+  // arms it, second click runs `resetInvestigation`. No modal.
+  const [resetArmed, setResetArmed] = useState(false)
+  const handleResetClick = useCallback(() => {
+    if (!resetArmed) {
+      setResetArmed(true)
+      return
+    }
+    setResetArmed(false)
+    resetInvestigation()
+  }, [resetArmed, resetInvestigation])
+  const handleResetCancel = useCallback(() => {
+    setResetArmed(false)
+  }, [])
 
   return (
     <div className="dossier-shell">
@@ -137,6 +179,9 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
           initialMaterialCount={initialMaterialCount}
           confirmedPatternCount={view.selectionSummary.confirmedPatternCount}
           isReportSubmitted={isReportSubmitted}
+          unlockedSinceStartTitles={
+            view.selectionSummary.unlockedSinceStartTitles
+          }
         />
       </header>
 
@@ -395,6 +440,14 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
               <h2 id="observations-heading">{observationsHeading}</h2>
               <span className="dossier-card-counter">{observationsCounter}</span>
             </header>
+            <p
+              className={
+                'dossier-evidence-state-hint' +
+                (selectedCount > 0 ? ' is-state-bookmarks' : ' is-state-preview')
+              }
+            >
+              {observationsStateHint}
+            </p>
             {observationsList.length === 0 ? (
               <p className="dossier-source-empty">
                 Пока ни одного фрагмента не отмечено. Откройте материал и
@@ -535,13 +588,42 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
                   >
                     обновить сводку
                   </button>
-                  <button
-                    type="button"
-                    className="dossier-report-reset"
-                    onClick={resetInvestigation}
-                  >
-                    сбросить материалы
-                  </button>
+                  {resetArmed ? (
+                    <div
+                      className="dossier-report-reset-confirm"
+                      role="alertdialog"
+                      aria-label="подтверждение сброса"
+                    >
+                      <p>
+                        Снять все закладки и начать материалы заново? Сводка и
+                        разбор будут сброшены.
+                      </p>
+                      <div className="dossier-report-reset-confirm-actions">
+                        <button
+                          type="button"
+                          className="dossier-report-reset is-confirm"
+                          onClick={handleResetClick}
+                        >
+                          да, начать заново
+                        </button>
+                        <button
+                          type="button"
+                          className="dossier-report-reset-cancel"
+                          onClick={handleResetCancel}
+                        >
+                          отмена
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="dossier-report-reset"
+                      onClick={handleResetClick}
+                    >
+                      начать материалы заново
+                    </button>
+                  )}
                 </div>
               </>
             ) : (
@@ -555,21 +637,17 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
                     {view.selectionSummary.confirmedPatternCount}
                   </strong>
                 </p>
-                <p className="dossier-report-status-hint">
-                  {selectedCount === 0
-                    ? 'Откройте материал и поставьте закладку, чтобы собрать сводку.'
-                    : view.selectionSummary.confirmedPatternCount === 0
-                      ? 'Ни одна связь пока не подтверждена. Сводку можно сформировать как раннюю фиксацию.'
-                      : 'Связи подтверждены, сводку можно подавать.'}
-                </p>
-                <h3 className="dossier-report-subheading">возможные исходы</h3>
-                <ul className="dossier-report-list">
-                  {view.outcomes.map((outcome) => (
-                    <li key={outcome.id}>
-                      <strong>{outcome.title}.</strong> {outcome.summary}
-                    </li>
-                  ))}
-                </ul>
+                <p className="dossier-report-status-hint">{reportStatusHint}</p>
+                <details className="dossier-report-outcomes">
+                  <summary>возможные рамки сводки</summary>
+                  <ul className="dossier-report-list">
+                    {view.outcomes.map((outcome) => (
+                      <li key={outcome.id}>
+                        <strong>{outcome.title}.</strong> {outcome.summary}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
                 {view.debrief.length > 0 && (
                   <>
                     <h3 className="dossier-report-subheading">справочник</h3>
@@ -591,14 +669,40 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
                   >
                     сформировать сводку
                   </button>
-                  <button
-                    type="button"
-                    className="dossier-report-reset"
-                    onClick={resetInvestigation}
-                    disabled={selectedCount === 0}
-                  >
-                    сбросить материалы
-                  </button>
+                  {resetArmed ? (
+                    <div
+                      className="dossier-report-reset-confirm"
+                      role="alertdialog"
+                      aria-label="подтверждение сброса"
+                    >
+                      <p>Снять все закладки?</p>
+                      <div className="dossier-report-reset-confirm-actions">
+                        <button
+                          type="button"
+                          className="dossier-report-reset is-confirm"
+                          onClick={handleResetClick}
+                        >
+                          да, снять
+                        </button>
+                        <button
+                          type="button"
+                          className="dossier-report-reset-cancel"
+                          onClick={handleResetCancel}
+                        >
+                          отмена
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="dossier-report-reset"
+                      onClick={handleResetClick}
+                      disabled={selectedCount === 0}
+                    >
+                      снять все закладки
+                    </button>
+                  )}
                 </div>
               </>
             )}

@@ -865,6 +865,119 @@
   font-style: italic;
 }
 
+.dossier-evidence-state-hint {
+  margin: 4px 0 12px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--dossier-ink-soft);
+  border-left: 2px solid var(--dossier-rule);
+  background-color: rgba(255, 250, 235, 0.55);
+}
+
+.dossier-evidence-state-hint.is-state-bookmarks {
+  border-left-color: var(--dossier-amber);
+  color: var(--dossier-ink);
+}
+
+.dossier-evidence-state-hint.is-state-preview {
+  font-style: italic;
+}
+
+.dossier-report-outcomes {
+  margin: 6px 0 14px;
+  padding: 0;
+  border-top: 1px dashed var(--dossier-rule-soft);
+  border-bottom: 1px dashed var(--dossier-rule-soft);
+}
+
+.dossier-report-outcomes > summary {
+  padding: 8px 0;
+  font-family: var(--dossier-font-label);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--dossier-ink-faint);
+  cursor: pointer;
+  list-style: none;
+}
+
+.dossier-report-outcomes > summary::-webkit-details-marker {
+  display: none;
+}
+
+.dossier-report-outcomes > summary::before {
+  content: '▸ ';
+  display: inline-block;
+  margin-right: 4px;
+  color: var(--dossier-ink-faint);
+}
+
+.dossier-report-outcomes[open] > summary::before {
+  content: '▾ ';
+}
+
+.dossier-report-outcomes > summary:hover {
+  color: var(--dossier-ink);
+}
+
+.dossier-report-outcomes > .dossier-report-list {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.dossier-report-reset-confirm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--dossier-rule);
+  background-color: rgba(255, 250, 235, 0.7);
+}
+
+.dossier-report-reset-confirm > p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--dossier-ink);
+}
+
+.dossier-report-reset-confirm-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.dossier-report-reset.is-confirm {
+  flex: 1;
+  width: auto;
+  border-color: var(--dossier-red);
+  color: var(--dossier-red);
+}
+
+.dossier-report-reset.is-confirm:hover {
+  border-color: var(--dossier-red);
+  color: var(--dossier-paper);
+  background-color: var(--dossier-red);
+}
+
+.dossier-report-reset-cancel {
+  flex: 1;
+  padding: 8px 14px;
+  background-color: transparent;
+  border: 1px dashed var(--dossier-rule);
+  color: var(--dossier-ink-soft);
+  font-family: var(--dossier-font-label);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.dossier-report-reset-cancel:hover {
+  border-color: var(--dossier-ink);
+  color: var(--dossier-ink);
+}
+
 .dossier-report-status {
   margin: 0 0 6px;
   font-size: 13px;

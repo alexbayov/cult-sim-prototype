@@ -10,6 +10,10 @@ export type ProgressNudgeProps = {
   initialMaterialCount: number
   confirmedPatternCount: number
   isReportSubmitted: boolean
+  // Titles of materials that opened up beyond the case's initial set,
+  // so the nudge can name what just appeared instead of just saying
+  // "open new material". May be empty.
+  unlockedSinceStartTitles?: ReadonlyArray<string>
 }
 
 type Nudge = {
@@ -23,6 +27,7 @@ function pickNudge({
   initialMaterialCount,
   confirmedPatternCount,
   isReportSubmitted,
+  unlockedSinceStartTitles,
 }: ProgressNudgeProps): Nudge | null {
   if (isReportSubmitted) return null
 
@@ -38,13 +43,32 @@ function pickNudge({
   }
 
   if (confirmedPatternCount >= 2) {
+    const remaining = 4 - confirmedPatternCount
     return {
       tone: 'ready',
-      text: 'Уже можно собрать раннюю сводку.',
+      text:
+        'Уже можно собрать раннюю сводку. Для сильной нужно ещё ' +
+        remaining +
+        ' ' +
+        (remaining === 1 ? 'связь' : 'связи') +
+        '.',
     }
   }
 
   if (unlockedMaterialCount > initialMaterialCount) {
+    const titles = unlockedSinceStartTitles ?? []
+    if (titles.length === 1) {
+      return {
+        tone: 'unlock',
+        text: `Открылся новый материал: «${titles[0]}».`,
+      }
+    }
+    if (titles.length >= 2) {
+      return {
+        tone: 'unlock',
+        text: `Открылись новые материалы (${titles.length}). Например, «${titles[0]}».`,
+      }
+    }
     return { tone: 'unlock', text: 'Открылся новый материал.' }
   }
 
