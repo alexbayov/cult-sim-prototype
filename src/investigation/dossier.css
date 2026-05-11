@@ -1457,7 +1457,6 @@
   border-left-color: var(--dossier-red);
   background: rgba(245, 228, 218, 0.6);
 }
-||||||| parent of 15dbcfd (Add resolution screen + result metrics + achievement seeds)
 
 /* ---- Resolution / разбор panel (Dev K) ----
  * Rendered after the analyst submits сводка. Mirrors the dossier paper look
