@@ -10,7 +10,8 @@
       "e_chat_warm_welcome"
     ],
     "weakEvidenceIds": [
-      "e_landing_free_week"
+      "e_landing_free_week",
+      "e_chat_birthday_warmth"
     ],
     "counterEvidenceIds": [],
     "debriefText": "Сами по себе тёплый приём и поддержка нормальны. Признаком становятся ускоренное «свой/чужой» разделение и снижение критичности на старте."
@@ -23,11 +24,15 @@
     "requiredEvidenceCount": 2,
     "strongEvidenceIds": [
       "e_ex_isolation_request",
-      "e_relative_no_contact"
+      "e_relative_no_contact",
+      "e_calendar_silent_week",
+      "e_refund_outside_warning"
     ],
     "weakEvidenceIds": [
       "e_landing_special_path",
-      "e_video_special_path"
+      "e_video_special_path",
+      "e_calendar_inner_circle_block",
+      "e_curator_protective_ties_warning"
     ],
     "counterEvidenceIds": [],
     "debriefText": "Сильный знак — прямые просьбы меньше общаться с внешними людьми и систематические совпадения времени группы с привычными «окнами» семейного контакта."
@@ -43,7 +48,9 @@
       "e_closed_loyalty_term"
     ],
     "weakEvidenceIds": [
-      "e_landing_new_circle"
+      "e_landing_new_circle",
+      "e_comments_inside_jargon",
+      "e_calendar_six_week_arc"
     ],
     "counterEvidenceIds": [],
     "debriefText": "Сам по себе сленг — нормален. Сигнал — когда термин подменяет аргумент: «он просто не осознанный» вместо разбора по сути."
@@ -61,7 +68,9 @@
     ],
     "weakEvidenceIds": [
       "e_landing_free_week",
-      "e_relative_payment_concern"
+      "e_relative_payment_concern",
+      "e_refund_partial_offer",
+      "e_comments_price_evasion"
     ],
     "counterEvidenceIds": [],
     "debriefText": "Признак — сочетание срочности, скидок «только сегодня», социального давления группы и отсутствия прозрачной возможности паузы или возврата."
@@ -76,7 +85,9 @@
       "e_closed_weekly_review",
       "e_checklist_doubt_response"
     ],
-    "weakEvidenceIds": [],
+    "weakEvidenceIds": [
+      "e_refund_partial_offer"
+    ],
     "counterEvidenceIds": [],
     "debriefText": "Сигнал — обязательность разбора и отсутствие выбора степени раскрытия. Здоровые группы поддерживают добровольность и право не говорить."
   },
@@ -88,7 +99,10 @@
     "requiredEvidenceCount": 2,
     "strongEvidenceIds": [
       "e_payment_pressure_script",
-      "e_checklist_doubt_response"
+      "e_checklist_doubt_response",
+      "e_refund_curator_pushback",
+      "e_curator_marina_profile",
+      "e_curator_doubt_protocol"
     ],
     "weakEvidenceIds": [
       "e_chat_morning_ritual"
@@ -104,10 +118,13 @@
     "requiredEvidenceCount": 2,
     "strongEvidenceIds": [
       "e_chat_morning_ritual",
-      "e_checklist_outreach"
+      "e_checklist_outreach",
+      "e_calendar_daily_windows"
     ],
     "weakEvidenceIds": [
-      "e_relative_no_contact"
+      "e_relative_no_contact",
+      "e_calendar_inner_circle_block",
+      "e_curator_marina_profile"
     ],
     "counterEvidenceIds": [],
     "debriefText": "Сигнал — пропуск ритуала ощущается как кризис, а не как обычный выходной."
@@ -120,9 +137,16 @@
     "requiredEvidenceCount": 2,
     "strongEvidenceIds": [
       "e_chat_dont_tell_outside",
-      "e_chat_skeptic_redirect"
+      "e_chat_skeptic_redirect",
+      "e_curator_external_observer_note"
     ],
-    "weakEvidenceIds": [],
+    "weakEvidenceIds": [
+      "e_comments_doubt_attacked",
+      "e_comments_price_evasion",
+      "e_chat_refund_hint",
+      "e_refund_outside_warning",
+      "e_curator_doubt_protocol"
+    ],
     "counterEvidenceIds": [],
     "debriefText": "Сигнал — устойчивая практика переноса критики в приват и наказание за публичное обсуждение, даже мягкое."
   },
@@ -154,7 +178,9 @@
       "e_ex_shame_public"
     ],
     "weakEvidenceIds": [
-      "e_chat_skeptic_redirect"
+      "e_chat_skeptic_redirect",
+      "e_comments_doubt_attacked",
+      "e_refund_curator_pushback"
     ],
     "counterEvidenceIds": [],
     "debriefText": "Здоровое сообщество может расстраиваться, но не публикует уход человека как подтверждение его «слабости»."
@@ -169,7 +195,9 @@
       "e_ex_protective_family",
       "e_relative_no_contact"
     ],
-    "weakEvidenceIds": [],
+    "weakEvidenceIds": [
+      "e_curator_protective_ties_warning"
+    ],
     "counterEvidenceIds": [],
     "debriefText": "Защитные связи не «разрушают» группу — они снижают её исключительность, оставляя человеку выбор."
   },
@@ -180,7 +208,8 @@
     "fullDescription": "Защитный фактор: участник сохраняет привычку проверять свои выводы вне группы, удерживать сомнение и не закрывать его внутренними терминами.",
     "requiredEvidenceCount": 1,
     "strongEvidenceIds": [
-      "e_video_leader_humility"
+      "e_video_leader_humility",
+      "e_observer_chronicle"
     ],
     "weakEvidenceIds": [
       "e_chat_skeptic_redirect"
