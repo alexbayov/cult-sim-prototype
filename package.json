@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "validate:investigation": "node scripts/validate-investigation.mjs",
-    "smoke:interaction": "node scripts/smoke-interaction-model.mjs"
+    "smoke:interaction": "node scripts/smoke-interaction-model.mjs",
+    "audit:balance": "node scripts/audit-investigation-balance.mjs"
   },
   "dependencies": {
     "react": "^19.2.5",
