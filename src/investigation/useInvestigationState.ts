@@ -17,13 +17,20 @@ import {
   type DossierView,
   type Selection,
 } from './investigationViewModel'
+import {
+  buildResolution,
+  type Resolution,
+} from './resolutionModel'
+import { createInteractionState } from './interactionModel'
 
 export type InvestigationState = {
   view: DossierView
   activeMaterialId: string
+  openedMaterialIds: ReadonlySet<string>
   selectedCount: number
   isReportSubmitted: boolean
   canSubmitReport: boolean
+  resolution: Resolution | null
   selectMaterial: (sourceId: string) => void
   toggleFragment: (fragmentId: string) => void
   submitReport: () => void
@@ -38,6 +45,21 @@ export function useInvestigationState(
   )
   const [reportSubmitted, setReportSubmitted] = useState<boolean>(false)
   const [pickedMaterialId, setPickedMaterialId] = useState<string | null>(null)
+  // Sources the analyst has actually focused during the session. The very
+  // first material the view will land on is the case's first initial source,
+  // so seed the set with that so «opened» count starts at 1 on first render.
+  const initialOpenedMaterialIds = useMemo(
+    () =>
+      new Set<string>(
+        content.case.initialSourceIds[0]
+          ? [content.case.initialSourceIds[0]]
+          : [],
+      ),
+    [content],
+  )
+  const [openedMaterialIds, setOpenedMaterialIds] = useState<Set<string>>(
+    () => new Set(initialOpenedMaterialIds),
+  )
 
   const selection: Selection = useMemo(
     () => ({ selectedFragmentIds, reportSubmitted }),
@@ -71,6 +93,12 @@ export function useInvestigationState(
 
   const selectMaterial = useCallback((sourceId: string) => {
     setPickedMaterialId(sourceId)
+    setOpenedMaterialIds((prev) => {
+      if (prev.has(sourceId)) return prev
+      const next = new Set(prev)
+      next.add(sourceId)
+      return next
+    })
   }, [])
 
   const toggleFragment = useCallback((fragmentId: string) => {
@@ -96,17 +124,28 @@ export function useInvestigationState(
     setSelectedFragmentIds(new Set())
     setReportSubmitted(false)
     setPickedMaterialId(null)
-  }, [])
+    setOpenedMaterialIds(new Set(initialOpenedMaterialIds))
+  }, [initialOpenedMaterialIds])
 
   const selectedCount = selectedFragmentIds.size
   const canSubmitReport = selectedCount > 0
 
+  const resolution = useMemo<Resolution | null>(() => {
+    if (!reportSubmitted) return null
+    return buildResolution(content, {
+      selection: createInteractionState(selectedFragmentIds),
+      openedMaterialIds,
+    })
+  }, [content, reportSubmitted, selectedFragmentIds, openedMaterialIds])
+
   return {
     view,
     activeMaterialId,
+    openedMaterialIds,
     selectedCount,
     isReportSubmitted: reportSubmitted,
     canSubmitReport,
+    resolution,
     selectMaterial,
     toggleFragment,
     submitReport,
