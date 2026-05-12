@@ -24,15 +24,17 @@
 // And the view-model filter from src/investigation/investigationViewModel.ts:
 //
 //   - source pane hides fragments with `defaultVisible: false`
-//   - source pane hides fragments with `isRedHerring: true`
+//   - red-herring fragments ARE surfaced; the player has to recognise them by
+//     content and not bookmark them (they feed `шум` / `a_no_rush` in the
+//     resolution)
 //
 // We compute "min fragments" under two views:
 //
 //   - **model min**: lower bound assuming the player can select any fragment.
 //   - **UI min**:    realistic bound assuming the player only sees fragments
-//                    surfaced by the dossier (defaultVisible && !isRedHerring),
-//                    in sources currently unlocked. Source-unlock fragments
-//                    are auto-counted if needed.
+//                    surfaced by the dossier (defaultVisible), in sources
+//                    currently unlocked. Source-unlock fragments are
+//                    auto-counted if needed.
 
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
@@ -121,11 +123,11 @@ function observationStatus(pattern, selectedSet, evidenceById) {
 // ---- UI accessibility ------------------------------------------------------
 
 function buildUiVisibleEvidenceIds(content, unlockedSourceIds) {
-  // What the dossier source pane actually shows.
+  // What the dossier source pane actually shows. Red-herrings are surfaced
+  // alongside real fragments; the player has to recognise them by content.
   const visible = new Set()
   for (const e of content.evidence) {
     if (!e.defaultVisible) continue
-    if (e.isRedHerring) continue
     if (!unlockedSourceIds.has(e.sourceId)) continue
     visible.add(e.id)
   }
@@ -147,8 +149,10 @@ function unlockedSourcesFromSelection(content, selectedIds) {
 // Walks pattern.strongEvidenceIds + weakEvidenceIds + suggestedPatternIds and
 // looks for the smallest selectable subset that brings the pattern to `strong`.
 //
-// "Selectable" means the fragment is `defaultVisible && !isRedHerring` and its
-// source is either initially visible OR unlocked by another selected fragment.
+// "Selectable" means the fragment is `defaultVisible` and its source is
+// either initially visible OR unlocked by another selected fragment. (Red-
+// herrings are selectable too — choosing them is a player mistake that
+// shows up in the resolution's `шум` metric.)
 // We resolve unlock chains by trying every candidate fragment plus, if needed,
 // any single unlock-source fragment that opens its source.
 //
@@ -195,7 +199,6 @@ function smallestUiReach(pattern, content) {
     const e = evidenceById.get(fid)
     if (!e) return false
     if (!e.defaultVisible) return false
-    if (e.isRedHerring) return false
     return currentUnlocked.has(e.sourceId)
   }
 
@@ -221,15 +224,17 @@ function smallestUiReach(pattern, content) {
       }
       if (!locked) break
       const openers = unlockMap.get(locked.sourceId) ?? []
-      // Prefer a UI-visible opener; otherwise fall back to any default-visible,
-      // non-red-herring opener whose source may itself need unlocking.
+      // Prefer a UI-visible opener; otherwise fall back to any default-visible
+      // opener whose source may itself need unlocking. (Red-herrings shouldn't
+      // appear as openers in authored content, but we don't filter them out
+      // here — picking one is a player mistake, not unreachable content.)
       const sortedOpeners = [...openers].sort((a, b) => {
         const av = isUiVisible(a.id, unlocked) ? 0 : 1
         const bv = isUiVisible(b.id, unlocked) ? 0 : 1
         return av - bv
       })
       const opener = sortedOpeners.find(
-        (o) => o.defaultVisible && !o.isRedHerring,
+        (o) => o.defaultVisible,
       )
       if (!opener) return null
       if (sel.has(opener.id)) {
@@ -446,7 +451,9 @@ function reportCase(content) {
 
   if (redHerrings.length > 0) {
     lines.push('')
-    lines.push('Red herrings (UI hides these from the source pane):')
+    lines.push(
+      'Red herrings (surfaced in the source pane when defaultVisible):',
+    )
     for (const e of redHerrings) {
       const vis = e.defaultVisible ? 'defaultVisible' : 'defaultHidden'
       lines.push(`  · ${e.id} (${e.sourceId}, ${vis}) — "${e.text.slice(0, 64)}…"`)
@@ -493,7 +500,7 @@ function reportCase(content) {
       for (const fid of p.strongEvidenceIds) {
         const e = content.evidence.find((x) => x.id === fid)
         if (!e) continue
-        if (!e.defaultVisible || e.isRedHerring) continue
+        if (!e.defaultVisible) continue
         if (initial.has(e.sourceId))
           return { count: 1, patternId: p.id, fid }
       }
@@ -568,8 +575,13 @@ function reportCase(content) {
   ).length
   if (totalRedHerrings > 0) {
     risks.push(
-      `red herrings (${totalRedHerrings}) are silently filtered from the source pane; ` +
-        `the 'noise' metric and 'a_no_rush' achievement are trivially perfect by construction.`,
+      `red herrings (${totalRedHerrings}) are surfaced in the source pane; ` +
+        `verify 'noise' authoring matches the playtest expectation.`,
+    )
+  } else {
+    risks.push(
+      `no red herrings authored; 'noise' metric will always be 0 and ` +
+        `'a_no_rush' achievement is trivially earned.`,
     )
   }
   for (const p of content.patterns) {
