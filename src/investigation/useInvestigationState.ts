@@ -27,6 +27,11 @@ import {
   markStarted,
   markSubmitted,
 } from './progressStorage'
+import {
+  clearAchievementsForCase,
+  readEarnedAchievements,
+  recordEarnedAchievements,
+} from './achievementsStorage'
 
 export type InvestigationState = {
   view: DossierView
@@ -36,6 +41,11 @@ export type InvestigationState = {
   isReportSubmitted: boolean
   canSubmitReport: boolean
   resolution: Resolution | null
+  // Union of achievement ids earned for this case across all runs in this
+  // browser. Populated from localStorage on mount and updated whenever a
+  // submit produces a new `resolution`. Not yet consumed by any UI — the
+  // dimmed «previously earned» badge surface lands in Wave 3.
+  persistedEarnedAchievementIds: readonly string[]
   selectMaterial: (sourceId: string) => void
   toggleFragment: (fragmentId: string) => void
   submitReport: () => void
@@ -138,6 +148,7 @@ export function useInvestigationState(
     setPickedMaterialId(null)
     setOpenedMaterialIds(new Set(initialOpenedMaterialIds))
     clearProgress(content.case.id)
+    clearAchievementsForCase(content.case.id)
   }, [content.case.id, initialOpenedMaterialIds])
 
   const selectedCount = selectedFragmentIds.size
@@ -151,6 +162,32 @@ export function useInvestigationState(
     })
   }, [content, reportSubmitted, selectedFragmentIds, openedMaterialIds])
 
+  // Persist the freshly-earned achievement ids whenever a resolution becomes
+  // truthy. Storage is union-add, so previous runs never lose their
+  // achievements even if this run earned a different subset.
+  useEffect(() => {
+    if (!resolution) return
+    const earnedIds = resolution.achievements
+      .filter((a) => a.earned)
+      .map((a) => a.id)
+    recordEarnedAchievements(content.case.id, earnedIds)
+  }, [resolution, content.case.id])
+
+  // Union of achievement ids earned for this case across all runs in this
+  // browser. Derived in render to avoid setState-in-effect cascades — we
+  // combine the persisted set with the current resolution's earned ids so
+  // the value reflects the latest in-session write without a second pass.
+  // After a reset, `resolution` becomes null and storage is cleared, so the
+  // memo returns `[]` on the next render.
+  const persistedEarnedAchievementIds = useMemo<readonly string[]>(() => {
+    const fromStorage = readEarnedAchievements(content.case.id)
+    if (!resolution) return fromStorage
+    const earnedNow = resolution.achievements
+      .filter((a) => a.earned)
+      .map((a) => a.id)
+    return Array.from(new Set([...fromStorage, ...earnedNow]))
+  }, [content.case.id, resolution])
+
   return {
     view,
     activeMaterialId,
@@ -159,6 +196,7 @@ export function useInvestigationState(
     isReportSubmitted: reportSubmitted,
     canSubmitReport,
     resolution,
+    persistedEarnedAchievementIds,
     selectMaterial,
     toggleFragment,
     submitReport,
