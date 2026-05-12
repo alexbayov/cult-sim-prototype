@@ -733,6 +733,12 @@ export function buildDossierView(
     selection,
   )
 
+  const unlockedByFragmentMap = computeUnlockedByFragment(
+    content,
+    selection,
+    unlockedIds,
+  )
+
   const materials: DossierViewMaterial[] = sources.map((s) => ({
     id: s.id,
     typeLabel: SOURCE_TYPE_LABELS[s.type] ?? s.type,
@@ -747,11 +753,6 @@ export function buildDossierView(
   }))
 
   const fragmentsBySource = buildFragmentsBySource(content, selection, patternById)
-  const unlockedByFragmentMap = computeUnlockedByFragment(
-    content,
-    selection,
-    unlockedIds,
-  )
   const observations = buildPreviewObservations(
     evidence,
     sourceById,
