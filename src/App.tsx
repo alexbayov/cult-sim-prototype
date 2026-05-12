@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import DossierApp from './investigation/DossierApp'
 import CaseSelectScreen from './investigation/CaseSelectScreen'
 import OnboardingGuide from './investigation/OnboardingGuide'
 import { investigationContents } from './game/investigation/data'
 import type { InvestigationContent } from './game/investigation/types'
 import seasonManifest from './game/seasons/season-01.json'
+import { initYandex } from './platform/yandex'
 
 const GUIDE_SEEN_KEY = 'dossier-onboarding-seen-v1'
 
@@ -63,6 +64,13 @@ function App() {
     }),
     [],
   )
+
+  // Initialise the Yandex Games SDK adapter once. The resolved instance is
+  // held inside `src/platform/yandex.ts` and read via `getYandexSdk()` by
+  // future consumers (Wave 3 — see docs/YANDEX_INTEGRATION.md).
+  useEffect(() => {
+    initYandex()
+  }, [])
 
   const handleSelect = (content: InvestigationContent) => {
     setActiveContent(content)
