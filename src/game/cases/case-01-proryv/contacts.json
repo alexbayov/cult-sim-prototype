@@ -1,0 +1,33 @@
+[
+  {
+    "id": "c-mother",
+    "name": "Елена И.",
+    "role": "мать подопечного",
+    "initialState": "public",
+    "interviewId": "int-mother"
+  },
+  {
+    "id": "c-denis",
+    "name": "Денис К.",
+    "role": "бывший участник марафона",
+    "initialState": "gated",
+    "gateRequirement": {
+      "requiredHypothesis": "h-financial",
+      "minWeight": "weak",
+      "minSupportingPhrases": 1
+    },
+    "interviewId": "int-denis"
+  },
+  {
+    "id": "c-anna",
+    "name": "Анна П.",
+    "role": "журналист регионального СМИ",
+    "initialState": "gated",
+    "gateRequirement": {
+      "requiredHypothesis": "h-financial",
+      "minWeight": "weak",
+      "minSupportingPhrases": 0
+    },
+    "interviewId": "int-anna"
+  }
+]

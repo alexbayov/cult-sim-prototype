@@ -10,6 +10,7 @@
     "preview": "vite preview",
     "validate:investigation": "node scripts/validate-investigation.mjs",
     "smoke:interaction": "node scripts/smoke-interaction-model.mjs",
+    "smoke:v2": "node scripts/smoke-case-v2.mjs",
     "audit:balance": "node scripts/audit-investigation-balance.mjs",
     "audit:visible-language": "node scripts/audit-visible-language.mjs",
     "audit:drafts": "node scripts/audit-content-drafts.mjs",

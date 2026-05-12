@@ -1,0 +1,67 @@
+[
+  {
+    "id": "int-mother",
+    "contactId": "c-mother",
+    "startNodeId": "n-mother-1",
+    "nodes": [
+      {
+        "id": "n-mother-1",
+        "speaker": "contact",
+        "text": "[заглушка — текст от Дева β]",
+        "next": "n-mother-2"
+      },
+      {
+        "id": "n-mother-2",
+        "speaker": "expert",
+        "text": "[заглушка — текст от Дева β]"
+      }
+    ]
+  },
+  {
+    "id": "int-denis",
+    "contactId": "c-denis",
+    "startNodeId": "n-denis-1",
+    "nodes": [
+      {
+        "id": "n-denis-1",
+        "speaker": "contact",
+        "text": "[заглушка — текст от Дева β]",
+        "choices": [
+          {
+            "id": "ch-denis-finance",
+            "label": "[заглушка — реплика от Дева β]",
+            "requiresPhraseFromHypothesis": "h-financial",
+            "next": "n-denis-2-finance"
+          },
+          {
+            "id": "ch-denis-neutral",
+            "label": "[заглушка — нейтральная реплика от Дева β]",
+            "next": "n-denis-2-neutral"
+          }
+        ]
+      },
+      {
+        "id": "n-denis-2-finance",
+        "speaker": "contact",
+        "text": "[заглушка — раскрытие при предъявлении финансовой опоры]"
+      },
+      {
+        "id": "n-denis-2-neutral",
+        "speaker": "contact",
+        "text": "[заглушка — нейтральный ответ]"
+      }
+    ]
+  },
+  {
+    "id": "int-anna",
+    "contactId": "c-anna",
+    "startNodeId": "n-anna-1",
+    "nodes": [
+      {
+        "id": "n-anna-1",
+        "speaker": "contact",
+        "text": "[заглушка — текст от Дева β]"
+      }
+    ]
+  }
+]

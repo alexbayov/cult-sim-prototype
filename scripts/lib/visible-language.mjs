@@ -37,6 +37,30 @@ export const FORBIDDEN_PRIMARY_TERMS = [
   'красн.*сел',
 ]
 
+// Additional terms enforced on v2 cases only. The Wave 4 pivot tightens
+// player-facing vocabulary: the player no longer sees a pre-labelled grid of
+// «улики» / «паттерны» / «фрейм» / «шум» — they read raw documents and
+// assemble hypotheses themselves. The genre-jargon terms below leak the
+// designer's mental model and must stay out of v2 visible copy.
+//
+// v1 cases keep the existing list above untouched so the two existing cases
+// continue to validate without regression.
+//
+// Substring inclusion is intentional: 'улик' catches 'улики'/'улике' that the
+// v1 needle 'улика' would not catch on its own; 'паттерн' catches all forms;
+// 'доказательств' catches 'доказательства'/'доказательству'; etc. For v2 we
+// also globally forbid 'паттерн', whereas v1 only flags it in a small subset
+// of fields via PATTERN_TERM_FIELDS.
+export const FORBIDDEN_PRIMARY_TERMS_V2 = [
+  ...FORBIDDEN_PRIMARY_TERMS,
+  'шум',
+  'улик',
+  'доказательств',
+  'паттерн',
+  'red herring',
+  'фрейм',
+]
+
 // 'паттерн' is conditional: forbidden only in a smaller field set where
 // the player-facing word should always be «наблюдение». Internal
 // descriptions and debrief bodies still allow 'паттерн' as a developer
@@ -103,6 +127,25 @@ export function scanField(path, pathKind, text) {
     warnings.push(
       `${path} uses primary-label term "${PATTERN_TERM}"; prefer "наблюдение" in visible gameplay copy`,
     )
+  }
+  return warnings
+}
+
+/**
+ * Scan a single `text` value for the v2 lexicon. Unlike the v1 scanner this
+ * is field-agnostic (no `pathKind` switch): v2 forbids the whole expanded
+ * list everywhere it scans. v2 callers pick the field set themselves (see
+ * `scanCaseV2Content` below).
+ */
+export function scanFieldV2(path, text) {
+  const warnings = []
+  if (typeof text !== 'string' || text.length === 0) return warnings
+  for (const term of FORBIDDEN_PRIMARY_TERMS_V2) {
+    if (termMatches(text, term)) {
+      warnings.push(
+        `${path} uses primary-label term "${term}"; prefer neutral gameplay wording`,
+      )
+    }
   }
   return warnings
 }
@@ -191,6 +234,67 @@ export function scanInvestigationContent(content) {
     push(`debrief[${d.id}].shortExplanation`, 'debrief.shortExplanation', d.shortExplanation)
     // debrief.longExplanation intentionally not checked — expert
     // vocabulary is allowed there as secondary educational context.
+  }
+
+  return warnings
+}
+
+/**
+ * v2 visible-language scan. Operates on the assembled v2 case bundle
+ * produced by the v2 loader (see scripts/validate-investigation.mjs and
+ * scripts/audit-visible-language.mjs). Field coverage matches Dev α brief
+ * §4:
+ *
+ *   - case.title, brief.body
+ *   - hypothesis[*].label, hypothesis[*].description
+ *   - document[*].title, document[*].body
+ *   - interview[*].nodes[*].text, interview[*].nodes[*].choices[*].label
+ *   - action[*].label, action[*].description
+ *   - recommendation[*].label, recommendation[*].body
+ *   - epilogue[*].body
+ *
+ * Returns an array of warning strings (possibly empty).
+ */
+export function scanCaseV2Content(bundle) {
+  const warnings = []
+  const push = (path, text) => {
+    for (const w of scanFieldV2(path, text)) warnings.push(w)
+  }
+
+  push('case.title', bundle.case?.title)
+  push('case.brief.body', bundle.case?.brief?.body)
+
+  for (const h of bundle.hypotheses ?? []) {
+    push(`hypothesis[${h.id}].label`, h.label)
+    push(`hypothesis[${h.id}].description`, h.description)
+  }
+
+  for (const d of bundle.documents ?? []) {
+    push(`document[${d.id}].title`, d.title)
+    push(`document[${d.id}].body`, d.body)
+  }
+
+  for (const i of bundle.interviews ?? []) {
+    for (const n of i.nodes ?? []) {
+      push(`interview[${i.id}].node[${n.id}].text`, n.text)
+      for (const ch of n.choices ?? []) {
+        push(`interview[${i.id}].node[${n.id}].choice[${ch.id}].label`, ch.label)
+      }
+    }
+  }
+
+  for (const a of bundle.actions ?? []) {
+    push(`action[${a.id}].label`, a.label)
+    push(`action[${a.id}].description`, a.description)
+  }
+
+  for (const r of bundle.recommendations ?? []) {
+    push(`recommendation[${r.id}].label`, r.label)
+    push(`recommendation[${r.id}].body`, r.body)
+  }
+
+  for (const e of bundle.epilogues ?? []) {
+    push(`epilogue[${e.id}].body`, e.body)
   }
 
   return warnings

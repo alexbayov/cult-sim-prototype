@@ -26,7 +26,10 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { scanInvestigationContent } from './lib/visible-language.mjs'
+import {
+  scanCaseV2Content,
+  scanInvestigationContent,
+} from './lib/visible-language.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -76,7 +79,19 @@ const dupes = (label, ids) => {
   return errs
 }
 
-function validateCase(caseDir) {
+function loadCaseJsonOnly(caseDir) {
+  return JSON.parse(readFileSync(join(caseDir, 'case.json'), 'utf8'))
+}
+
+// Dispatch helper: returns 'v2' for v2 cases, 'v1' for legacy cases. We
+// require case.json to exist on disk; any other shape (missing field, value
+// like 'v3') falls through to the v1 path so old content keeps loading.
+function detectSchemaVersion(caseJson) {
+  if (caseJson && caseJson.schemaVersion === 'v2') return 'v2'
+  return 'v1'
+}
+
+function validateCaseV1(caseDir) {
   const load = (file) => JSON.parse(readFileSync(join(caseDir, file), 'utf8'))
   const content = {
     case: load('case.json'),
@@ -290,7 +305,278 @@ function validateCase(caseDir) {
   //    `audit:visible-language` CLI can reuse the exact same rules.
   for (const w of scanInvestigationContent(content)) warnings.push(w)
 
-  return { caseId, content, errors, warnings }
+  return {
+    caseId,
+    schemaVersion: 'v1',
+    summary: `Counts: persons=${content.persons.length}, sources=${content.sources.length}, evidence=${content.evidence.length}, patterns=${content.patterns.length}, outcomes=${content.report.outcomes.length}, debrief=${content.debrief.length}`,
+    errors,
+    warnings,
+  }
+}
+
+// ---- v2 validator -----------------------------------------------------------
+//
+// v2 cases use a different on-disk shape (see src/game/investigation/types.ts).
+// Hard errors here mirror Dev α brief §3 cross-checks; warnings flag
+// quality-of-life concerns (e.g. quality coverage that's "technically valid"
+// but produces a player-unfriendly experience).
+
+function validateCaseV2(caseDir) {
+  const loadOptional = (file) => {
+    const p = join(caseDir, file)
+    if (!existsSync(p)) return null
+    return JSON.parse(readFileSync(p, 'utf8'))
+  }
+  const load = (file) => {
+    const v = loadOptional(file)
+    if (v === null) {
+      throw new Error(`v2 case ${caseDir} is missing required file: ${file}`)
+    }
+    return v
+  }
+
+  const bundle = {
+    case: load('case.json'),
+    hypotheses: load('hypotheses.json'),
+    documents: load('documents.json'),
+    contacts: load('contacts.json'),
+    interviews: load('interviews.json'),
+    actions: load('actions.json'),
+    recommendations: load('recommendations.json'),
+    epilogues: load('epilogues.json'),
+  }
+  const caseId = bundle.case.id
+  const errors = []
+  const warnings = []
+
+  // ---- case.json shape ------------------------------------------------------
+  const c = bundle.case
+  if (!c.id) errors.push('Case is missing id')
+  if (!c.title) errors.push(`Case ${c.id} is missing title`)
+  if (!c.protagonist || !c.protagonist.name) {
+    errors.push(`Case ${c.id} is missing protagonist.name`)
+  }
+  if (!c.brief || typeof c.brief.from !== 'string' || typeof c.brief.body !== 'string') {
+    errors.push(`Case ${c.id} is missing brief.from / brief.body`)
+  }
+  if (!Number.isFinite(c.actionBudget) || c.actionBudget < 1) {
+    errors.push(`Case ${c.id} actionBudget must be >= 1`)
+  }
+
+  // ---- id sets used for cross-references ------------------------------------
+  errors.push(...dupes('hypothesis', bundle.hypotheses.map((h) => h.id)))
+  errors.push(...dupes('document', bundle.documents.map((d) => d.id)))
+  errors.push(...dupes('contact', bundle.contacts.map((ct) => ct.id)))
+  errors.push(...dupes('interview', bundle.interviews.map((it) => it.id)))
+  errors.push(...dupes('action', bundle.actions.map((a) => a.id)))
+  errors.push(...dupes('recommendation', bundle.recommendations.map((r) => r.id)))
+  errors.push(...dupes('epilogue', bundle.epilogues.map((e) => e.id)))
+
+  const hypothesisIds = new Set(bundle.hypotheses.map((h) => h.id))
+  const documentIds = new Set(bundle.documents.map((d) => d.id))
+  const contactIds = new Set(bundle.contacts.map((ct) => ct.id))
+  const interviewIds = new Set(bundle.interviews.map((it) => it.id))
+  const actionIds = new Set(bundle.actions.map((a) => a.id))
+  const recommendationIds = new Set(bundle.recommendations.map((r) => r.id))
+
+  // ---- documents ------------------------------------------------------------
+  for (const d of bundle.documents) {
+    if (!d.id) errors.push('Document is missing id')
+    if (typeof d.body !== 'string') {
+      errors.push(`Document ${d.id} body must be a string`)
+      continue
+    }
+    if (d.unlockedByAction && !actionIds.has(d.unlockedByAction)) {
+      errors.push(
+        `Document ${d.id} unlockedByAction references unknown action: ${d.unlockedByAction}`,
+      )
+    }
+    if (!Array.isArray(d.keyPhrases)) {
+      errors.push(`Document ${d.id} keyPhrases must be an array`)
+      continue
+    }
+    for (let i = 0; i < d.keyPhrases.length; i++) {
+      const kp = d.keyPhrases[i]
+      const where = `Document ${d.id}.keyPhrases[${i}]`
+      if (!Array.isArray(kp.range) || kp.range.length !== 2) {
+        errors.push(`${where}.range must be [start, end)`)
+        continue
+      }
+      const [s, e] = kp.range
+      if (!Number.isInteger(s) || !Number.isInteger(e)) {
+        errors.push(`${where}.range must be integers`)
+      } else if (s < 0 || e > d.body.length || s >= e) {
+        errors.push(
+          `${where}.range [${s}, ${e}) out of [0, ${d.body.length}) or non-positive width`,
+        )
+      }
+      if (!['strong', 'weak', 'counter'].includes(kp.weight)) {
+        errors.push(`${where}.weight must be strong|weak|counter`)
+      }
+      if (!Array.isArray(kp.worksOn) || kp.worksOn.length === 0) {
+        errors.push(`${where}.worksOn must be a non-empty array of hypothesis ids`)
+      } else {
+        for (const hid of kp.worksOn) {
+          if (!hypothesisIds.has(hid)) {
+            errors.push(`${where}.worksOn references unknown hypothesis: ${hid}`)
+          }
+        }
+      }
+    }
+  }
+
+  // ---- contacts -------------------------------------------------------------
+  for (const ct of bundle.contacts) {
+    if (!['public', 'gated', 'hostile', 'unknown'].includes(ct.initialState)) {
+      errors.push(`Contact ${ct.id} has invalid initialState ${ct.initialState}`)
+    }
+    if (!interviewIds.has(ct.interviewId)) {
+      errors.push(
+        `Contact ${ct.id} interviewId references unknown interview: ${ct.interviewId}`,
+      )
+    }
+    const gate = ct.gateRequirement
+    if (gate) {
+      if (gate.requiredHypothesis && !hypothesisIds.has(gate.requiredHypothesis)) {
+        errors.push(
+          `Contact ${ct.id} gateRequirement.requiredHypothesis references unknown hypothesis: ${gate.requiredHypothesis}`,
+        )
+      }
+      if (gate.minWeight && !['weak', 'strong'].includes(gate.minWeight)) {
+        errors.push(`Contact ${ct.id} gateRequirement.minWeight must be weak|strong`)
+      }
+      if (
+        gate.minSupportingPhrases !== undefined &&
+        (!Number.isInteger(gate.minSupportingPhrases) || gate.minSupportingPhrases < 0)
+      ) {
+        errors.push(`Contact ${ct.id} gateRequirement.minSupportingPhrases must be a non-negative integer`)
+      }
+    }
+  }
+
+  // ---- interviews -----------------------------------------------------------
+  for (const it of bundle.interviews) {
+    if (!contactIds.has(it.contactId)) {
+      errors.push(`Interview ${it.id} contactId references unknown contact: ${it.contactId}`)
+    }
+    const nodeIds = new Set(it.nodes.map((n) => n.id))
+    errors.push(...dupes(`interview ${it.id} node`, it.nodes.map((n) => n.id)))
+    if (!nodeIds.has(it.startNodeId)) {
+      errors.push(`Interview ${it.id} startNodeId references unknown node: ${it.startNodeId}`)
+    }
+    for (const n of it.nodes) {
+      if (!['expert', 'contact'].includes(n.speaker)) {
+        errors.push(`Interview ${it.id} node ${n.id} speaker must be expert|contact`)
+      }
+      if (n.next !== undefined && !nodeIds.has(n.next)) {
+        errors.push(`Interview ${it.id} node ${n.id} next references unknown node: ${n.next}`)
+      }
+      for (const ch of n.choices ?? []) {
+        if (!nodeIds.has(ch.next)) {
+          errors.push(
+            `Interview ${it.id} node ${n.id} choice ${ch.id} next references unknown node: ${ch.next}`,
+          )
+        }
+        if (ch.requiresPhraseFromHypothesis && !hypothesisIds.has(ch.requiresPhraseFromHypothesis)) {
+          errors.push(
+            `Interview ${it.id} node ${n.id} choice ${ch.id} requiresPhraseFromHypothesis references unknown hypothesis: ${ch.requiresPhraseFromHypothesis}`,
+          )
+        }
+      }
+    }
+  }
+
+  // ---- actions --------------------------------------------------------------
+  for (const a of bundle.actions) {
+    if (!Number.isInteger(a.cost) || a.cost < 0) {
+      errors.push(`Action ${a.id} cost must be a non-negative integer`)
+    }
+    if (!Array.isArray(a.effects)) {
+      errors.push(`Action ${a.id} effects must be an array`)
+      continue
+    }
+    for (const fx of a.effects) {
+      if (fx.kind === 'unlockDocument') {
+        if (!documentIds.has(fx.documentId)) {
+          errors.push(`Action ${a.id} unlockDocument references unknown document: ${fx.documentId}`)
+        }
+      } else if (fx.kind === 'unlockContact') {
+        if (!contactIds.has(fx.contactId)) {
+          errors.push(`Action ${a.id} unlockContact references unknown contact: ${fx.contactId}`)
+        }
+      } else {
+        errors.push(`Action ${a.id} has unknown effect kind: ${fx.kind}`)
+      }
+    }
+  }
+
+  // ---- recommendations ------------------------------------------------------
+  for (const r of bundle.recommendations) {
+    if (!Array.isArray(r.requiresHypotheses)) {
+      errors.push(`Recommendation ${r.id} requiresHypotheses must be an array`)
+      continue
+    }
+    for (const req of r.requiresHypotheses) {
+      if (!hypothesisIds.has(req.hypothesisId)) {
+        errors.push(
+          `Recommendation ${r.id} requiresHypotheses references unknown hypothesis: ${req.hypothesisId}`,
+        )
+      }
+      if (!['weak', 'strong'].includes(req.minWeight)) {
+        errors.push(`Recommendation ${r.id} requiresHypotheses[${req.hypothesisId}].minWeight must be weak|strong`)
+      }
+      if (!Number.isInteger(req.minSupportingPhrases) || req.minSupportingPhrases < 0) {
+        errors.push(
+          `Recommendation ${r.id} requiresHypotheses[${req.hypothesisId}].minSupportingPhrases must be a non-negative integer`,
+        )
+      }
+    }
+  }
+
+  // ---- epilogues ------------------------------------------------------------
+  const epiloguesByRec = new Map()
+  for (const e of bundle.epilogues) {
+    if (!recommendationIds.has(e.recommendationId)) {
+      errors.push(`Epilogue ${e.id} recommendationId references unknown recommendation: ${e.recommendationId}`)
+    }
+    if (!['precise', 'imprecise', 'incorrect'].includes(e.quality)) {
+      errors.push(`Epilogue ${e.id} quality must be precise|imprecise|incorrect`)
+    }
+    if (![3, 6, 12].includes(e.monthsAhead)) {
+      errors.push(`Epilogue ${e.id} monthsAhead must be 3|6|12`)
+    }
+    const bucket = epiloguesByRec.get(e.recommendationId) ?? new Set()
+    bucket.add(e.quality)
+    epiloguesByRec.set(e.recommendationId, bucket)
+  }
+  for (const r of bundle.recommendations) {
+    const qualities = epiloguesByRec.get(r.id) ?? new Set()
+    for (const q of ['precise', 'imprecise', 'incorrect']) {
+      if (!qualities.has(q)) {
+        errors.push(`Recommendation ${r.id} is missing a "${q}" epilogue`)
+      }
+    }
+  }
+
+  // ---- visible-language scan ------------------------------------------------
+  for (const w of scanCaseV2Content(bundle)) warnings.push(w)
+
+  return {
+    caseId,
+    schemaVersion: 'v2',
+    summary: `Counts: documents=${bundle.documents.length}, contacts=${bundle.contacts.length}, hypotheses=${bundle.hypotheses.length}, interviews=${bundle.interviews.length}, actions=${bundle.actions.length}, recommendations=${bundle.recommendations.length}, epilogues=${bundle.epilogues.length}`,
+    errors,
+    warnings,
+  }
+}
+
+// ---- Dispatch ---------------------------------------------------------------
+
+function validateCase(caseDir) {
+  const caseJson = loadCaseJsonOnly(caseDir)
+  const version = detectSchemaVersion(caseJson)
+  if (version === 'v2') return validateCaseV2(caseDir)
+  return validateCaseV1(caseDir)
 }
 
 // ---- Run for every case folder ---------------------------------------------
@@ -298,9 +584,9 @@ function validateCase(caseDir) {
 let totalErrors = 0
 
 for (const caseDir of caseDirs) {
-  const { caseId, content, errors, warnings } = validateCase(caseDir)
-  console.log(`\n[${caseId}]`)
-  console.log(`  Counts: persons=${content.persons.length}, sources=${content.sources.length}, evidence=${content.evidence.length}, patterns=${content.patterns.length}, outcomes=${content.report.outcomes.length}, debrief=${content.debrief.length}`)
+  const { caseId, schemaVersion, summary, errors, warnings } = validateCase(caseDir)
+  console.log(`\n[${caseId}] (${schemaVersion})`)
+  console.log(`  ${summary}`)
 
   if (warnings.length > 0) {
     console.log('  Warnings:')

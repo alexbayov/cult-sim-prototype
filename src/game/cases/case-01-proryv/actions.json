@@ -1,0 +1,34 @@
+[
+  {
+    "id": "act-archive-search",
+    "label": "[заглушка — название от Дева β]",
+    "description": "[заглушка — описание от Дева β]",
+    "cost": 1,
+    "effects": [
+      { "kind": "unlockDocument", "documentId": "doc-clipping-archive" }
+    ]
+  },
+  {
+    "id": "act-request-client-docs",
+    "label": "[заглушка — название от Дева β]",
+    "description": "[заглушка — описание от Дева β]",
+    "cost": 1,
+    "effects": [
+      { "kind": "unlockDocument", "documentId": "doc-emails-client" }
+    ]
+  },
+  {
+    "id": "act-request-interview",
+    "label": "[заглушка — название от Дева β]",
+    "description": "[заглушка — описание от Дева β; запрос интервью; конкретный контакт определяется в рантайме, отдельный PR]",
+    "cost": 1,
+    "effects": []
+  },
+  {
+    "id": "act-personal-visit",
+    "label": "[заглушка — название от Дева β]",
+    "description": "[заглушка — описание от Дева β; повышенный риск отказа, отдельный PR]",
+    "cost": 2,
+    "effects": []
+  }
+]
