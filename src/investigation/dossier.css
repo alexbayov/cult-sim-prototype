@@ -1227,6 +1227,31 @@
   color: var(--dossier-ink-faint);
 }
 
+.dossier-select-season {
+  margin: 0 0 10px;
+  padding: 6px 0 8px;
+  border-top: 1px dashed var(--dossier-rule-soft);
+  border-bottom: 1px dashed var(--dossier-rule-soft);
+}
+
+.dossier-select-season-title {
+  margin: 0 0 2px;
+  font-family: var(--dossier-font-label);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--dossier-ink-soft);
+}
+
+.dossier-select-season-subtitle {
+  margin: 0;
+  font-family: var(--dossier-font-body);
+  font-style: italic;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--dossier-ink-faint);
+}
+
 .dossier-select-title {
   margin: 0 0 10px;
   font-family: var(--dossier-font-body);
@@ -1297,6 +1322,25 @@
   font-size: 19px;
   line-height: 1.22;
   color: var(--dossier-ink);
+}
+
+.dossier-select-card-progress {
+  display: inline-block;
+  margin: 0 0 6px;
+  padding: 3px 8px;
+  border: 1px solid var(--dossier-rule);
+  background-color: rgba(29, 22, 13, 0.05);
+  font-family: var(--dossier-font-label);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--dossier-ink-soft);
+}
+
+.dossier-select-card-progress.is-submitted {
+  border-color: var(--dossier-green);
+  color: var(--dossier-green);
+  background-color: rgba(53, 94, 42, 0.12);
 }
 
 .dossier-select-card-subtitle {
