@@ -378,7 +378,6 @@ function buildFragmentsBySource(
   const byId: Record<string, DossierViewFragment[]> = {}
   for (const e of content.evidence) {
     if (!e.defaultVisible) continue
-    if (e.isRedHerring) continue
     const unlocksHint =
       e.unlocksSourceIds.length > 0
         ? e.unlocksSourceIds
@@ -492,7 +491,7 @@ function buildPreviewObservations(
   limit: number,
 ): DossierViewObservation[] {
   const ranked = evidence
-    .filter((e) => e.defaultVisible && !e.isRedHerring)
+    .filter((e) => e.defaultVisible)
     .slice()
     .sort((a, b) => {
       if (b.weight !== a.weight) return b.weight - a.weight
@@ -552,7 +551,7 @@ function buildTimeline(
       })
     }
     const strong = content.evidence
-      .filter((e) => e.defaultVisible && !e.isRedHerring && e.weight >= 4)
+      .filter((e) => e.defaultVisible && e.weight >= 4)
       .slice()
       .sort((a, b) => (Date.parse(a.date) || 0) - (Date.parse(b.date) || 0))
     for (const e of strong) {
@@ -697,7 +696,6 @@ function buildReport(
     .filter(
       (e) =>
         selection.selectedFragmentIds.has(e.id) &&
-        !e.isRedHerring &&
         e.weight >= 3,
     )
     .sort((a, b) => b.weight - a.weight || b.reliability - a.reliability)
@@ -810,7 +808,7 @@ export function buildDossierView(
   })()
 
   const visibleEvidenceCount = evidence.filter(
-    (e) => e.defaultVisible && !e.isRedHerring,
+    (e) => e.defaultVisible,
   ).length
   const selectedCount = selection.selectedFragmentIds.size
   const unlockedMaterialCount = materials.filter((m) => !m.locked).length
