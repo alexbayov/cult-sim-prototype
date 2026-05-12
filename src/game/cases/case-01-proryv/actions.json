@@ -1,0 +1,34 @@
+[
+  {
+    "id": "act-archive-search",
+    "label": "Поиск в архиве",
+    "description": "Запросить публикации из газетного архива",
+    "cost": 1,
+    "effects": [
+      { "kind": "unlockDocument", "documentId": "doc-clipping-archive" }
+    ]
+  },
+  {
+    "id": "act-request-client-docs",
+    "label": "Запросить документы клиента",
+    "description": "Попросить заявителя предоставить переписку и документы",
+    "cost": 1,
+    "effects": [
+      { "kind": "unlockDocument", "documentId": "doc-emails-client" }
+    ]
+  },
+  {
+    "id": "act-request-interview",
+    "label": "Запросить интервью",
+    "description": "Договориться о встрече с контактом",
+    "cost": 1,
+    "effects": []
+  },
+  {
+    "id": "act-personal-visit",
+    "label": "Личный визит",
+    "description": "Выехать на место и осмотреться лично",
+    "cost": 2,
+    "effects": []
+  }
+]

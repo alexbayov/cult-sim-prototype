@@ -1,0 +1,51 @@
+[
+  {
+    "id": "int-mother",
+    "contactId": "c-mother",
+    "startNodeId": "n-mother-1",
+    "nodes": [
+      {
+        "id": "n-mother-1",
+        "speaker": "contact",
+        "text": "[заглушка — текст от Дева \u03b2]"
+      }
+    ]
+  },
+  {
+    "id": "int-denis",
+    "contactId": "c-denis",
+    "startNodeId": "n-denis-1",
+    "nodes": [
+      {
+        "id": "n-denis-1",
+        "speaker": "contact",
+        "text": "[заглушка — текст от Дева \u03b2]",
+        "choices": [
+          {
+            "id": "ch-denis-1",
+            "label": "[заглушка]",
+            "requiresPhraseFromHypothesis": "h-financial",
+            "next": "n-denis-2"
+          }
+        ]
+      },
+      {
+        "id": "n-denis-2",
+        "speaker": "contact",
+        "text": "[заглушка — текст от Дева \u03b2]"
+      }
+    ]
+  },
+  {
+    "id": "int-anna",
+    "contactId": "c-anna",
+    "startNodeId": "n-anna-1",
+    "nodes": [
+      {
+        "id": "n-anna-1",
+        "speaker": "contact",
+        "text": "[заглушка — текст от Дева \u03b2]"
+      }
+    ]
+  }
+]

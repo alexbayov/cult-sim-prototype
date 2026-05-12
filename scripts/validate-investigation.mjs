@@ -26,7 +26,7 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { scanInvestigationContent } from './lib/visible-language.mjs'
+import { scanInvestigationContent, scanV2Content } from './lib/visible-language.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -76,10 +76,184 @@ const dupes = (label, ids) => {
   return errs
 }
 
+// ---------------------------------------------------------------------------
+// v2 validator
+// ---------------------------------------------------------------------------
+
+function validateCaseV2(caseDir, caseManifest) {
+  const load = (file) => JSON.parse(readFileSync(join(caseDir, file), 'utf8'))
+  const hypotheses = load('hypotheses.json')
+  const documents = load('documents.json')
+  const contacts = load('contacts.json')
+  const interviews = load('interviews.json')
+  const actions = load('actions.json')
+  const recommendations = load('recommendations.json')
+  const epilogues = load('epilogues.json')
+
+  const caseId = caseManifest.id
+  const errors = []
+  const warnings = []
+
+  // Collect id sets
+  const hypothesisIds = new Set(hypotheses.map((h) => h.id))
+  const documentIds = new Set(documents.map((d) => d.id))
+  const contactIds = new Set(contacts.map((c) => c.id))
+  const interviewIds = new Set(interviews.map((i) => i.id))
+  const actionIds = new Set(actions.map((a) => a.id))
+  const recommendationIds = new Set(recommendations.map((r) => r.id))
+
+  // Duplicate ids
+  errors.push(...dupes('hypothesis', hypotheses.map((h) => h.id)))
+  errors.push(...dupes('document', documents.map((d) => d.id)))
+  errors.push(...dupes('contact', contacts.map((c) => c.id)))
+  errors.push(...dupes('interview', interviews.map((i) => i.id)))
+  errors.push(...dupes('action', actions.map((a) => a.id)))
+  errors.push(...dupes('recommendation', recommendations.map((r) => r.id)))
+  errors.push(...dupes('epilogue', epilogues.map((e) => e.id)))
+
+  // KeyPhrase validation
+  for (const doc of documents) {
+    for (let i = 0; i < doc.keyPhrases.length; i++) {
+      const kp = doc.keyPhrases[i]
+      const prefix = `document[${doc.id}].keyPhrases[${i}]`
+      if (!Array.isArray(kp.range) || kp.range.length !== 2) {
+        errors.push(`${prefix}: range must be a [start, end) pair`)
+      } else {
+        const [start, end] = kp.range
+        if (start < 0 || end > doc.body.length || start >= end) {
+          errors.push(`${prefix}: range [${start}, ${end}) out of bounds (body length ${doc.body.length})`)
+        }
+      }
+      if (Array.isArray(kp.worksOn)) {
+        for (const hid of kp.worksOn) {
+          if (!hypothesisIds.has(hid)) {
+            errors.push(`${prefix}.worksOn references unknown hypothesis: ${hid}`)
+          }
+        }
+      }
+    }
+  }
+
+  // Contact.gateRequirement.requiredHypothesis
+  for (const ct of contacts) {
+    if (ct.gateRequirement?.requiredHypothesis) {
+      if (!hypothesisIds.has(ct.gateRequirement.requiredHypothesis)) {
+        errors.push(`contact[${ct.id}].gateRequirement.requiredHypothesis references unknown hypothesis: ${ct.gateRequirement.requiredHypothesis}`)
+      }
+    }
+    // Contact.interviewId
+    if (!interviewIds.has(ct.interviewId)) {
+      errors.push(`contact[${ct.id}].interviewId references unknown interview: ${ct.interviewId}`)
+    }
+  }
+
+  // Interview.contactId + node references
+  for (const intv of interviews) {
+    if (!contactIds.has(intv.contactId)) {
+      errors.push(`interview[${intv.id}].contactId references unknown contact: ${intv.contactId}`)
+    }
+    const nodeIds = new Set(intv.nodes.map((n) => n.id))
+    errors.push(...dupes(`interview[${intv.id}] node`, intv.nodes.map((n) => n.id)))
+    if (!nodeIds.has(intv.startNodeId)) {
+      errors.push(`interview[${intv.id}].startNodeId references unknown node: ${intv.startNodeId}`)
+    }
+    for (const node of intv.nodes) {
+      if (node.next !== undefined && !nodeIds.has(node.next)) {
+        errors.push(`interview[${intv.id}].node[${node.id}].next references unknown node: ${node.next}`)
+      }
+      if (Array.isArray(node.choices)) {
+        for (const ch of node.choices) {
+          if (!nodeIds.has(ch.next)) {
+            errors.push(`interview[${intv.id}].node[${node.id}].choice[${ch.id}].next references unknown node: ${ch.next}`)
+          }
+          if (ch.requiresPhraseFromHypothesis && !hypothesisIds.has(ch.requiresPhraseFromHypothesis)) {
+            errors.push(`interview[${intv.id}].node[${node.id}].choice[${ch.id}].requiresPhraseFromHypothesis references unknown hypothesis: ${ch.requiresPhraseFromHypothesis}`)
+          }
+        }
+      }
+    }
+  }
+
+  // Action effects
+  for (const act of actions) {
+    for (const eff of act.effects) {
+      if (eff.kind === 'unlockDocument' && !documentIds.has(eff.documentId)) {
+        errors.push(`action[${act.id}].effect unlockDocument references unknown document: ${eff.documentId}`)
+      }
+      if (eff.kind === 'unlockContact' && !contactIds.has(eff.contactId)) {
+        errors.push(`action[${act.id}].effect unlockContact references unknown contact: ${eff.contactId}`)
+      }
+    }
+  }
+
+  // Recommendation.requiresHypotheses
+  for (const rec of recommendations) {
+    for (const req of rec.requiresHypotheses) {
+      if (!hypothesisIds.has(req.hypothesisId)) {
+        errors.push(`recommendation[${rec.id}].requiresHypotheses references unknown hypothesis: ${req.hypothesisId}`)
+      }
+    }
+  }
+
+  // Epilogue.recommendationId + quality coverage
+  const epiloguesByRec = new Map()
+  for (const ep of epilogues) {
+    if (!recommendationIds.has(ep.recommendationId)) {
+      errors.push(`epilogue[${ep.id}].recommendationId references unknown recommendation: ${ep.recommendationId}`)
+    }
+    if (!epiloguesByRec.has(ep.recommendationId)) epiloguesByRec.set(ep.recommendationId, new Set())
+    epiloguesByRec.get(ep.recommendationId).add(ep.quality)
+  }
+  for (const rec of recommendations) {
+    const quals = epiloguesByRec.get(rec.id) ?? new Set()
+    for (const q of ['precise', 'imprecise', 'incorrect']) {
+      if (!quals.has(q)) {
+        errors.push(`recommendation[${rec.id}] is missing an epilogue with quality "${q}"`)
+      }
+    }
+  }
+
+  // actionBudget sanity
+  if (!(caseManifest.actionBudget >= 1)) {
+    errors.push('actionBudget must be >= 1')
+  }
+
+  // Language guardrails
+  const v2Content = {
+    caseManifest,
+    hypotheses,
+    documents,
+    contacts,
+    interviews,
+    actions,
+    recommendations,
+    epilogues,
+  }
+  for (const w of scanV2Content(v2Content)) warnings.push(w)
+
+  const counts = {
+    documents: documents.length,
+    contacts: contacts.length,
+    hypotheses: hypotheses.length,
+    interviews: interviews.length,
+    actions: actions.length,
+    recommendations: recommendations.length,
+    epilogues: epilogues.length,
+  }
+
+  return { caseId, counts, errors, warnings, isV2: true }
+}
+
+// ---------------------------------------------------------------------------
+// v1 validator
+// ---------------------------------------------------------------------------
+
 function validateCase(caseDir) {
   const load = (file) => JSON.parse(readFileSync(join(caseDir, file), 'utf8'))
+  const caseManifest = load('case.json')
+  if (caseManifest.schemaVersion === 'v2') return validateCaseV2(caseDir, caseManifest)
   const content = {
-    case: load('case.json'),
+    case: caseManifest,
     persons: load('persons.json'),
     sources: load('sources.json'),
     evidence: load('evidence.json'),
@@ -298,9 +472,17 @@ function validateCase(caseDir) {
 let totalErrors = 0
 
 for (const caseDir of caseDirs) {
-  const { caseId, content, errors, warnings } = validateCase(caseDir)
+  const result = validateCase(caseDir)
+  const { caseId, errors, warnings } = result
   console.log(`\n[${caseId}]`)
-  console.log(`  Counts: persons=${content.persons.length}, sources=${content.sources.length}, evidence=${content.evidence.length}, patterns=${content.patterns.length}, outcomes=${content.report.outcomes.length}, debrief=${content.debrief.length}`)
+
+  if (result.isV2) {
+    const c = result.counts
+    console.log(`  Counts: documents=${c.documents}, contacts=${c.contacts}, hypotheses=${c.hypotheses}, interviews=${c.interviews}, actions=${c.actions}, recommendations=${c.recommendations}, epilogues=${c.epilogues}`)
+  } else {
+    const content = result.content
+    console.log(`  Counts: persons=${content.persons.length}, sources=${content.sources.length}, evidence=${content.evidence.length}, patterns=${content.patterns.length}, outcomes=${content.report.outcomes.length}, debrief=${content.debrief.length}`)
+  }
 
   if (warnings.length > 0) {
     console.log('  Warnings:')

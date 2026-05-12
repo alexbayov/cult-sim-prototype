@@ -35,6 +35,12 @@ export const FORBIDDEN_PRIMARY_TERMS = [
   'gaslighting',
   'газлайтинг',
   'красн.*сел',
+  'шум',
+  'улик',
+  'доказательств',
+  'паттерн',
+  'red herring',
+  'фрейм',
 ]
 
 // 'паттерн' is conditional: forbidden only in a smaller field set where
@@ -191,6 +197,62 @@ export function scanInvestigationContent(content) {
     push(`debrief[${d.id}].shortExplanation`, 'debrief.shortExplanation', d.shortExplanation)
     // debrief.longExplanation intentionally not checked — expert
     // vocabulary is allowed there as secondary educational context.
+  }
+
+  return warnings
+}
+
+/**
+ * Scan a v2 case content bundle for visible-language warnings.
+ *
+ * Field coverage:
+ *   - Document.{body, title}
+ *   - Interview*.text
+ *   - Recommendation.{body, label}
+ *   - Epilogue.body
+ *   - Hypothesis.{label, description}
+ *   - Action.{label, description}
+ *   - brief.body
+ *
+ * Returns an array of warning strings (possibly empty).
+ */
+export function scanV2Content(content) {
+  const warnings = []
+  const push = (path, kind, text) => {
+    for (const w of scanField(path, kind, text)) warnings.push(w)
+  }
+
+  const c = content.caseManifest
+  push('brief.body', 'brief.body', c.brief?.body)
+
+  for (const doc of content.documents ?? []) {
+    push(`document[${doc.id}].body`, 'document.body', doc.body)
+    push(`document[${doc.id}].title`, 'document.title', doc.title)
+  }
+
+  for (const intv of content.interviews ?? []) {
+    for (const node of intv.nodes ?? []) {
+      push(`interview[${intv.id}].node[${node.id}].text`, 'interview.node.text', node.text)
+    }
+  }
+
+  for (const rec of content.recommendations ?? []) {
+    push(`recommendation[${rec.id}].body`, 'recommendation.body', rec.body)
+    push(`recommendation[${rec.id}].label`, 'recommendation.label', rec.label)
+  }
+
+  for (const ep of content.epilogues ?? []) {
+    push(`epilogue[${ep.id}].body`, 'epilogue.body', ep.body)
+  }
+
+  for (const h of content.hypotheses ?? []) {
+    push(`hypothesis[${h.id}].label`, 'hypothesis.label', h.label)
+    push(`hypothesis[${h.id}].description`, 'hypothesis.description', h.description)
+  }
+
+  for (const act of content.actions ?? []) {
+    push(`action[${act.id}].label`, 'action.label', act.label)
+    push(`action[${act.id}].description`, 'action.description', act.description)
   }
 
   return warnings

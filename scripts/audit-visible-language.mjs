@@ -23,7 +23,7 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { scanInvestigationContent } from './lib/visible-language.mjs'
+import { scanInvestigationContent, scanV2Content } from './lib/visible-language.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -47,8 +47,22 @@ if (caseDirs.length === 0) {
 
 function loadCase(caseDir) {
   const load = (file) => JSON.parse(readFileSync(join(caseDir, file), 'utf8'))
+  const caseManifest = load('case.json')
+  if (caseManifest.schemaVersion === 'v2') {
+    return {
+      isV2: true,
+      caseManifest,
+      hypotheses: load('hypotheses.json'),
+      documents: load('documents.json'),
+      contacts: load('contacts.json'),
+      interviews: load('interviews.json'),
+      actions: load('actions.json'),
+      recommendations: load('recommendations.json'),
+      epilogues: load('epilogues.json'),
+    }
+  }
   return {
-    case: load('case.json'),
+    case: caseManifest,
     persons: load('persons.json'),
     sources: load('sources.json'),
     evidence: load('evidence.json'),
@@ -69,8 +83,8 @@ for (const caseDir of caseDirs) {
     continue
   }
 
-  const caseId = content.case?.id ?? caseDir
-  const warnings = scanInvestigationContent(content)
+  const caseId = content.isV2 ? content.caseManifest?.id : content.case?.id ?? caseDir
+  const warnings = content.isV2 ? scanV2Content(content) : scanInvestigationContent(content)
   totalWarnings += warnings.length
 
   console.log(`\n[${caseId}] ${warnings.length} visible-language warning${warnings.length === 1 ? '' : 's'}`)

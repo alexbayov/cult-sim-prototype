@@ -175,3 +175,126 @@ export type InvestigationContent = {
   report: ReportContent
   debrief: DebriefEntry[]
 }
+
+// ---------------------------------------------------------------------------
+// v2 investigation model — pivot to drag-highlight + hypothesis loop
+// ---------------------------------------------------------------------------
+
+export type DocumentType =
+  | 'chat'
+  | 'social'
+  | 'clipping'
+  | 'transcript'
+  | 'interview'
+  | 'document'
+  | 'personal'
+
+export type KeyPhrase = {
+  range: [number, number]
+  worksOn: string[]
+  weight: 'strong' | 'weak' | 'counter'
+}
+
+export type Document = {
+  id: string
+  type: DocumentType
+  title: string
+  source: string
+  date?: string
+  body: string
+  keyPhrases: KeyPhrase[]
+  defaultVisible: boolean
+  unlockedByAction?: string
+}
+
+export type Hypothesis = {
+  id: string
+  label: string
+  description: string
+}
+
+export type Contact = {
+  id: string
+  name: string
+  role: string
+  initialState: 'public' | 'gated' | 'hostile' | 'unknown'
+  gateRequirement?: {
+    requiredHypothesis?: string
+    minWeight?: 'weak' | 'strong'
+    minSupportingPhrases?: number
+  }
+  interviewId: string
+}
+
+export type InterviewChoice = {
+  id: string
+  label: string
+  requiresPhraseFromHypothesis?: string
+  next: string
+}
+
+export type InterviewNode = {
+  id: string
+  speaker: 'expert' | 'contact'
+  text: string
+  choices?: InterviewChoice[]
+  next?: string
+}
+
+export type Interview = {
+  id: string
+  contactId: string
+  startNodeId: string
+  nodes: InterviewNode[]
+}
+
+export type ActionEffect =
+  | { kind: 'unlockDocument'; documentId: string }
+  | { kind: 'unlockContact'; contactId: string }
+
+export type Action = {
+  id: string
+  label: string
+  description: string
+  cost: number
+  effects: ActionEffect[]
+}
+
+export type HypothesisRequirement = {
+  hypothesisId: string
+  minSupportingPhrases: number
+  minWeight: 'weak' | 'strong'
+}
+
+export type Recommendation = {
+  id: string
+  label: string
+  body: string
+  requiresHypotheses: HypothesisRequirement[]
+}
+
+export type EpilogueQuality = 'precise' | 'imprecise' | 'incorrect'
+
+export type Epilogue = {
+  id: string
+  recommendationId: string
+  quality: EpilogueQuality
+  body: string
+  monthsAhead: 3 | 6 | 12
+}
+
+export type CaseV2 = {
+  schemaVersion: 'v2'
+  id: string
+  title: string
+  protagonist: { name: string; tagline?: string }
+  brief: { from: string; body: string }
+  hypotheses: Hypothesis[]
+  documents: Document[]
+  contacts: Contact[]
+  interviews: Interview[]
+  actions: Action[]
+  actionBudget: number
+  recommendations: Recommendation[]
+  epilogues: Epilogue[]
+}

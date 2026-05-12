@@ -1,0 +1,58 @@
+[
+  {
+    "id": "doc-personal-thread",
+    "type": "personal",
+    "title": "Записи Сергея",
+    "source": "личный дневник",
+    "body": "[заглушка — текст от Дева \u03b2]",
+    "keyPhrases": [],
+    "defaultVisible": true
+  },
+  {
+    "id": "doc-chat-close-circle",
+    "type": "chat",
+    "title": "Чат «Ближний круг»",
+    "source": "мессенджер, скриншот",
+    "body": "[заглушка — текст от Дева \u03b2]",
+    "keyPhrases": [],
+    "defaultVisible": true
+  },
+  {
+    "id": "doc-social-post",
+    "type": "social",
+    "title": "Пост в соцсети",
+    "source": "публичная страница группы",
+    "body": "[заглушка — текст от Дева \u03b2]",
+    "keyPhrases": [],
+    "defaultVisible": true
+  },
+  {
+    "id": "doc-clipping-2018",
+    "type": "clipping",
+    "title": "Статья 2018 года",
+    "source": "региональное СМИ",
+    "body": "[заглушка — текст от Дева \u03b2]",
+    "keyPhrases": [],
+    "defaultVisible": true
+  },
+  {
+    "id": "doc-emails-client",
+    "type": "document",
+    "title": "Переписка с клиентом",
+    "source": "email-архив",
+    "body": "[заглушка — текст от Дева \u03b2]",
+    "keyPhrases": [],
+    "defaultVisible": false,
+    "unlockedByAction": "act-request-client-docs"
+  },
+  {
+    "id": "doc-clipping-archive",
+    "type": "clipping",
+    "title": "Архивная публикация",
+    "source": "газетный архив",
+    "body": "[заглушка — текст от Дева \u03b2]",
+    "keyPhrases": [],
+    "defaultVisible": false,
+    "unlockedByAction": "act-archive-search"
+  }
+]
