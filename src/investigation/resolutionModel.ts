@@ -87,6 +87,7 @@ export type ResolutionGlossaryEntry = {
 export type Resolution = {
   outcomeId: string | null
   outcomeTitle: string | null
+  outcomeRationale: string | null
   selectedFragmentCount: number
   openedSourceCount: number
   totalSourceCount: number
@@ -98,6 +99,7 @@ export type Resolution = {
   protectiveObservations: ResolutionPatternRef[]
   noiseFragments: ResolutionFragmentRef[]
   missedStrongTopics: ResolutionPatternRef[]
+  nextChecks: string[]
   metrics: ResolutionMetric[]
   achievements: ResolutionAchievement[]
   glossary: ResolutionGlossaryEntry[]
@@ -131,6 +133,18 @@ function stripParenthetical(label: string): string {
 
 function patternRef(p: ControlPattern): ResolutionPatternRef {
   return { id: p.id, title: p.title }
+}
+
+// Russian plural form for «N сильных наблюдений». Standard 1 / 2–4 / 5+
+// rule with the usual 11–14 exception.
+function pluralizeStrongObservations(n: number): string {
+  const mod10 = n % 10
+  const mod100 = n % 100
+  if (mod10 === 1 && mod100 !== 11) return 'сильное наблюдение'
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) {
+    return 'сильных наблюдения'
+  }
+  return 'сильных наблюдений'
 }
 
 // ---- Main entry ------------------------------------------------------------
@@ -341,33 +355,33 @@ export function buildResolution(
   const achievements: ResolutionAchievement[] = [
     {
       id: 'a_no_rush',
-      title: 'Не поспешил',
+      title: 'Без поспешности',
       description: 'Сводка собрана без шумных фрагментов в закладках.',
       earned: notRushed,
     },
     {
       id: 'a_external_support',
       title: 'Внешняя опора',
-      description: 'Замечена хотя бы одна внешняя опора участника.',
+      description: 'В закладках отмечена хотя бы одна внешняя опора участника.',
       earned: externalSupport,
     },
     {
       id: 'a_three_sources',
       title: 'Три источника',
       description:
-        'Связь подтверждена опорными фрагментами из трёх разных материалов.',
+        'Связь подкреплена опорными фрагментами из трёх разных материалов.',
       earned: threeSources,
     },
     {
       id: 'a_reality_check',
       title: 'Проверка реальности',
       description:
-        'Контр-факт или защитный контекст положен в закладки до сводки.',
+        'Контр-факт или защитный сигнал отмечен в закладках до сводки.',
       earned: realityCheck,
     },
     {
       id: 'a_methodical_reader',
-      title: 'Методичный читатель',
+      title: 'Методичное чтение',
       description:
         'Большая часть доступных материалов открыта до подачи сводки.',
       earned: methodicReader,
@@ -399,10 +413,66 @@ export function buildResolution(
   }
 
   const draft = buildSummaryDraft(content, selection)
+  const chosen = draft.outcome
+  const strongPatternIdSet = new Set(draft.strongObservationIds)
+
+  // ---- Outcome rationale («эта сводка выбрана потому что …»)
+  // Read directly off the picked outcome — no new heuristics.
+  let outcomeRationale: string | null = null
+  if (chosen) {
+    if (chosen.requiredPatternIds.length > 0) {
+      const requiredTitles = chosen.requiredPatternIds
+        .map((id) => patternById.get(id)?.title)
+        .filter((t): t is string => Boolean(t))
+      if (requiredTitles.length > 0) {
+        outcomeRationale =
+          'подтверждены опорные наблюдения: ' + requiredTitles.join(', ')
+      }
+    } else if (
+      chosen.minPatternConfirmedCount > 0 &&
+      strongPatternIdSet.size >= chosen.minPatternConfirmedCount
+    ) {
+      const n = strongPatternIdSet.size
+      outcomeRationale =
+        'подтверждено ' + n + ' ' + pluralizeStrongObservations(n)
+    } else {
+      // Fallback path: no eligible outcome, picked the catch-all.
+      outcomeRationale =
+        'опорные наблюдения пока не подтвердились — сводка собрана по слабым сигналам'
+    }
+  }
+
+  // ---- Next checks («что проверить дальше»)
+  // Stable order: missed-strong (cap 2) → contradiction (cap 1) →
+  // protective hint (cap 1). Total cap: 4.
+  const nextChecks: string[] = []
+  for (const topic of missedStrongTopics) {
+    if (nextChecks.length >= 2) break
+    nextChecks.push(
+      'подсмотреть «' +
+        topic.title +
+        '» — есть опорные фрагменты, пока ни одного в закладках',
+    )
+  }
+  if (contradictedObservations.length > 0 && nextChecks.length < 4) {
+    nextChecks.push(
+      'разобрать противоречие: «' +
+        contradictedObservations[0].title +
+        '»',
+    )
+  }
+  if (
+    protectiveObservations.length === 0 &&
+    protectivePatterns.length > 0 &&
+    nextChecks.length < 4
+  ) {
+    nextChecks.push('посмотреть, есть ли защитные сигналы у участников')
+  }
 
   return {
-    outcomeId: draft.outcome?.id ?? null,
-    outcomeTitle: draft.outcome?.title ?? null,
+    outcomeId: chosen?.id ?? null,
+    outcomeTitle: chosen?.title ?? null,
+    outcomeRationale,
     selectedFragmentCount: totalSelected,
     openedSourceCount,
     totalSourceCount: content.sources.length,
@@ -414,6 +484,7 @@ export function buildResolution(
     protectiveObservations,
     noiseFragments,
     missedStrongTopics,
+    nextChecks,
     metrics,
     achievements,
     glossary,

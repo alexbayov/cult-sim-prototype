@@ -783,8 +783,14 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
             <p className="dossier-resolution-sub">
               {resolution.outcomeTitle
                 ? `рамка сводки: ${resolution.outcomeTitle}`
-                : 'сводка собрана'}
+                : 'сводка собрана на основе текущих закладок'}
             </p>
+            {resolution.outcomeRationale && (
+              <p className="dossier-resolution-rationale">
+                эта сводка выбрана потому что{' '}
+                {resolution.outcomeRationale}.
+              </p>
+            )}
           </header>
 
           <div className="dossier-resolution-metrics">
@@ -967,13 +973,28 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
             )}
           </div>
 
+          {resolution.nextChecks.length > 0 && (
+            <section
+              className="dossier-resolution-next"
+              aria-labelledby="next-checks-heading"
+            >
+              <h3 id="next-checks-heading">что проверить дальше</h3>
+              <ul>
+                {resolution.nextChecks.map((text, i) => (
+                  <li key={i}>{text}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
           <section
             className="dossier-resolution-achievements"
             aria-labelledby="achievements-heading"
           >
             <header>
-              <h3 id="achievements-heading">профиль работы</h3>
+              <h3 id="achievements-heading">заметки профиля</h3>
               <span className="dossier-resolution-achievements-counter">
+                отмечено{' '}
                 {resolution.achievements.filter((a) => a.earned).length}{' '}
                 из {resolution.achievements.length}
               </span>
