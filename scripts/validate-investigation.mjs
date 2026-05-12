@@ -26,6 +26,8 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { scanInvestigationContent } from './lib/visible-language.mjs'
+
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 const casesRoot = join(__dirname, '..', 'src', 'game', 'cases')
@@ -258,98 +260,11 @@ function validateCase(caseDir) {
     }
   }
 
-  // 6. Language guardrails: warn for primary-label terms in visible gameplay fields.
-  {
-    const forbiddenTerms = [
-      'улика',
-      'доказательство',
-      'ДЕЛО',
-      'ДОСЬЕ',
-      'секта',
-      'love bombing',
-      'coercive control',
-      'gaslighting',
-      'газлайтинг',
-    ]
-    // 'паттерн' is only forbidden in visible gameplay titles/summaries, not in
-    // internal descriptions or debrief bodies. We check it in a smaller field set.
-    const patternTermFields = new Set([
-      'case.title',
-      'case.subtitle',
-      'case.publicLegend',
-      'case.investigationQuestion',
-      'case.riskStatement',
-      'source.title',
-      'pattern.title',
-      'pattern.shortDescription',
-      'report.outcome.title',
-      'report.outcome.summary',
-    ])
-    const containsTerm = (text, term) =>
-      typeof text === 'string' && text.toLowerCase().includes(term.toLowerCase())
-
-    const checkField = (path, text) => {
-      if (typeof text !== 'string' || text.length === 0) return
-      for (const term of forbiddenTerms) {
-        if (containsTerm(text, term)) {
-          warnings.push(`${path} uses primary-label term "${term}"; prefer neutral gameplay wording`)
-        }
-      }
-      if (patternTermFields.has(path) && containsTerm(text, 'паттерн')) {
-        warnings.push(`${path} uses primary-label term "паттерн"; prefer "наблюдение" in visible gameplay copy`)
-      }
-    }
-
-    // case
-    checkField('case.title', c.title)
-    checkField('case.subtitle', c.subtitle)
-    checkField('case.publicLegend', c.publicLegend)
-    checkField('case.investigationQuestion', c.investigationQuestion)
-    checkField('case.riskStatement', c.riskStatement)
-    checkField('case.contentWarning', c.contentWarning)
-
-    // persons (only public-facing fields)
-    for (const p of content.persons) {
-      checkField(`person[${p.id}].name`, p.name)
-      checkField(`person[${p.id}].publicDescription`, p.publicDescription)
-      for (let i = 0; i < p.knownFacts.length; i++) {
-        checkField(`person[${p.id}].knownFacts[${i}]`, p.knownFacts[i])
-      }
-    }
-
-    // sources
-    for (const s of content.sources) {
-      checkField(`source[${s.id}].title`, s.title)
-      checkField(`source[${s.id}].origin`, s.origin)
-    }
-
-    // evidence (text and speaker are visible)
-    for (const e of content.evidence) {
-      checkField(`evidence[${e.id}].text`, e.text)
-      checkField(`evidence[${e.id}].speaker`, e.speaker)
-    }
-
-    // patterns
-    for (const p of content.patterns) {
-      checkField(`pattern[${p.id}].title`, p.title)
-      checkField(`pattern[${p.id}].shortDescription`, p.shortDescription)
-      checkField(`pattern[${p.id}].fullDescription`, p.fullDescription)
-      checkField(`pattern[${p.id}].debriefText`, p.debriefText)
-    }
-
-    // report outcomes
-    for (const o of content.report.outcomes) {
-      checkField(`report.outcome[${o.id}].title`, o.title)
-      checkField(`report.outcome[${o.id}].summary`, o.summary)
-      checkField(`report.outcome[${o.id}].recommendedFraming`, o.recommendedFraming)
-      for (let i = 0; i < o.notes.length; i++) {
-        checkField(`report.outcome[${o.id}].notes[${i}]`, o.notes[i])
-      }
-    }
-
-    // Debrief is intentionally NOT checked: expert terms are allowed in
-    // debrief.term and debrief.longExplanation as secondary educational context.
-  }
+  // 6. Language guardrails: warn for primary-label terms in visible gameplay
+  //    fields. The deny list and per-field scan live in
+  //    scripts/lib/visible-language.mjs so the standalone
+  //    `audit:visible-language` CLI can reuse the exact same rules.
+  for (const w of scanInvestigationContent(content)) warnings.push(w)
 
   return { caseId, content, errors, warnings }
 }
