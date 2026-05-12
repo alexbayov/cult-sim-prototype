@@ -1,434 +1,157 @@
 # Conductor handoff
 
-Этот документ — единая точка входа для следующей Devin-сессии или для режима «дирижёр + параллельные девы».
+Этот документ — единая точка входа для следующей Devin-сессии или для режима «дирижёр + параллельные девы». Цель — дать свежему ридеру правильную текущую картину проекта без археологии.
 
 ## Коротко
 
-> **Pivot:** проект уходит от карточного симулятора секты к **cult investigation / dossier game** (см. fullbody-концепт). Старая карточная модель пока остаётся как legacy, но новые фичи строятся на investigation-модели.
+Проект — **браузерная investigation/dossier-игра**. Игрок читает источники, ставит закладки на фрагменты, собирает сводку и получает разбор. Карточный прототип, на котором проект стартовал, удалён в PR #33 — build от старой модели не зависит.
 
-Первый кейс расследования: **«Марафон личной эффективности»**.
+Первый кейс расследования: **«Марафон личной эффективности»** (`info-business-marathon`). Второй кейс: **«Семейный ретрит-центр»** (`family-retreat-center`).
 
-## Investigation pivot — текущее состояние
+Полная история по волнам и текущее состояние — в `docs/ROADMAP.md`. Открытые продуктовые вопросы и текущие рекомендации — в `docs/PRODUCT_DECISIONS.md`. Перед демо — `docs/DEMO_QA_CHECKLIST.md`.
 
-- Контент-модель расследования (case → persons → sources → evidence → patterns → report → debrief) реализована в `src/game/investigation/` + `src/game/cases/info-business-marathon/`. См. подробности в `docs/CONTENT_MODEL.md` (раздел «Investigation content»).
-- Старый карточный сценарий (`src/game/scenarios/info-business-marathon/`) и `App.tsx` пока не трогаем — они остаются как legacy/prototype, чтобы build не падал.
-- PR #8 (валидатор) и PR #9 (finale/debrief) старой модели **не мерджим**: идеи валидации и debrief перенесены в investigation-модель.
-
-## Что есть в коде после investigation-PR
+## Текущая структура кода
 
 ```txt
-src/game/investigation/types.ts          # InvestigationCase, CasePerson, CaseSource, EvidenceFragment, ControlPattern, ReportContent, DebriefEntry, ...
-src/game/investigation/contentSchema.ts  # validateInvestigationContent + assertValidInvestigationContent
-src/game/investigation/data.ts           # сборка кейса + лог валидации при импорте
-src/game/cases/info-business-marathon/   # case.json, persons.json, sources.json, evidence.json, patterns.json, report.json, debrief.json
-scripts/validate-investigation.mjs       # node-runner валидатора (без React/Vite)
+src/game/investigation/   # types.ts, contentSchema.ts, data.ts
+src/game/cases/           # JSON-контент:
+  info-business-marathon/   case.json, persons.json, sources.json,
+  family-retreat-center/    evidence.json, patterns.json, report.json, debrief.json
+src/game/seasons/         # season-01.json — сезонная оболочка
+src/game/types.ts         # общие runtime-типы
+
+src/investigation/        # dossier UI
+  CaseSelectScreen.tsx, DossierApp.tsx, OnboardingGuide.tsx, ProgressNudge.tsx,
+  interactionModel.ts, investigationViewModel.ts, resolutionModel.ts, useInvestigationState.ts,
+  achievementsStorage.ts, progressStorage.ts, dossier.css
+
+src/platform/yandex.ts    # Yandex Games SDK adapter (stub-режим по умолчанию)
+src/App.tsx               # роутинг picker ↔ dossier; init Yandex SDK
+src/main.tsx, src/index.css
+
+scripts/
+  validate-investigation.mjs        # node-валидатор контента
+  audit-investigation-balance.mjs   # балансный аудит
+  audit-visible-language.mjs        # visible-language guard (standalone CLI)
+  smoke-interaction-model.mjs       # smoke по interaction-модели
+  lib/visible-language.mjs          # shared deny-list + scan helper
 ```
 
-Команды:
+## Команды
 
 ```bash
-npm run validate:investigation   # структурная проверка + content-design warnings
-npm run build                    # tsc -b + vite build
+npm install
+npm run dev
+npm run build
 npm run lint
+npm run validate:investigation
+npm run audit:balance
+npm run audit:visible-language
 ```
 
-`validate:investigation` разделяет проверки на **errors** (валятся, exit 1: дубликаты id, висячие ссылки, выход из диапазонов, debrief с неизвестным evidence) и **warnings** (не валятся, exit 0: недоступные источники, пустые источники, orphan-паттерны, отсутствие debrief для паттерна, отсутствие low/medium/strong outcome, регрессия видимой лексики — `улика`, `доказательство`, `ДЕЛО`, `ДОСЬЕ`, `секта`, `love bombing`, `coercive control`, `gaslighting`, `газлайтинг`, `паттерн` в кратких видимых полях).
+Перед каждым PR обязательно прогонять (полный набор):
 
-Подробнее — в `docs/CONTENT_MODEL.md` (раздел про validate:investigation).
+```bash
+npm run validate:investigation
+npm run lint
+npm run build
+npm run audit:balance
+npm run audit:visible-language
+```
 
-## Следующие шаги после investigation-pivot
+`validate:investigation` разделяет проверки на **errors** (валятся, exit 1: дубликаты id, висячие ссылки, выход из диапазонов, debrief с неизвестным evidence) и **warnings** (не валятся, exit 0: недоступные источники, пустые источники, orphan-паттерны, отсутствие debrief для паттерна, отсутствие low/medium/strong outcome, регрессия видимой лексики — см. deny-list в `scripts/lib/visible-language.mjs`).
 
-1. **Dev B (dossier UI shell)** — заменить `App.tsx` на dossier-layout: source viewer, evidence tray, persons board, pattern board, timeline, final report. Использовать `infoBusinessMarathonInvestigation` из `src/game/investigation/data.ts`. UI должен корректно работать на 390×844.
-2. **Dev C (evidence/report loop)** — реализовать механику отметки фрагментов как evidence, привязки к persons/patterns, разблокировки источников и сборки финального report. Использовать thresholds из `report.json`.
-3. **Legacy retire** — после того как dossier-UI заменит карточный, удалить `src/game/scenarios/...` и старый `src/App.tsx`/`engine.ts`. До этого не трогаем.
-
-## Что НЕ делать в investigation-PR (Dev A scope)
-
-- Не переписывать `App.tsx` под dossier.
-- Не удалять `src/game/scenarios/...` и старый движок.
-- Не мерджить PR #8 / #9.
-- Не добавлять зависимости.
-- Не использовать `any` / `Record<string, unknown>` для core-данных.
+`audit:balance` и `audit:visible-language` — информационные прогоны, всегда exit 0. Подробнее — в `docs/CONTENT_MODEL.md`.
 
 ## Текущий стек
-
-Мы делаем браузерную игру/расследование о том, как обычные группы могут постепенно становиться деструктивными системами.
-
-Текущий стек:
 
 - React
 - TypeScript
 - Vite
-- JSON content
-- localStorage save
-- пока без backend
+- JSON-контент (внутри репозитория)
+- localStorage save (progress + achievements per case)
+- Yandex Games SDK adapter — stub по умолчанию, iframe-режим — под комментированным `<script>` в `index.html` и фичефлагом; см. `docs/YANDEX_INTEGRATION.md`
+- backend нет
 
-Репозиторий:
+Репозиторий: `https://github.com/alexbayov/cult-sim-prototype`.
 
-- `https://github.com/alexbayov/cult-sim-prototype`
+## Контекст беседы (что мы делаем и чего не делаем)
 
-## Контекст беседы
-
-Изначальная идея была про игру в духе системной симуляции деструктивных групп, но важный фокус быстро сместился:
-
-- не глобальная карта распространения;
-- не «инструкция по созданию секты»;
-- не морализаторская лекция;
-- а камерная модель, где видно, что происходит **внутри участников**.
+Мы делаем браузерную игру/расследование о том, как обычные группы могут постепенно становиться деструктивными системами. Камерная модель, без глобальной карты распространения, без инструкции по созданию секты, без морализаторской лекции — игрок видит источники и связи, и сам собирает картину.
 
 Ключевые решения:
 
-1. Игрок видит людей, их состояния и групповые метрики.
-2. Карты снаружи звучат нейтрально/правдоподобно.
-3. Скрытая логика карт моделирует контроль, зависимость, стыд, изоляцию, финансовое давление.
-4. Опасность возникает не от одной карты, а от сочетаний.
-5. Финал показывает цену системы и даёт разбор терминов.
+1. Игрок видит persons, sources, evidence fragments, patterns; собственными закладками собирает сводку.
+2. Видимый текст карт/материалов нейтрально-правдоподобный; «первичная» терминология (`улика`, `доказательство`, `ДЕЛО`, `ДОСЬЕ`, `материалы дела`, `секта`, `love bombing`, `coercive control`, `gaslighting`, `газлайтинг`, «красн… сел…», `паттерн` в коротких видимых полях) ловится visible-language валидатором — см. `scripts/lib/visible-language.mjs`.
+3. Опасность возникает не от одного фрагмента, а от связки — это считается через `ControlPattern` и `strongEvidenceIds / weakEvidenceIds / counterEvidenceIds`.
+4. Финальный outcome зависит от состава confirmed patterns и thresholds в `report.json`. После сводки игрок видит «профиль работы» с метриками, четырьмя диагностическими панелями и achievements.
+5. Прогресс и achievements персистятся в `localStorage` (per case). Двукратная пересдача того же кейса — допустима; achievements не сбрасываются автоматически.
 
 Важная формулировка от пользователя:
 
 > не формулировать прямо «лидер всегда прав»; внешняя семантика должна быть мягче, но смысл должен считаться системой.
 
-Также пользователь прямо обозначил:
+Также:
 
 - игра может разбирать радикализацию и вербовку, но без инструктивных деталей;
 - игра не должна прямо говорить «это плохо»;
-- нужно показывать разные финалы, включая мрачно-успешные;
-- проект ведём как маленькую полноценную game studio;
-- пользователь готов генерировать визуал в GPT/Canva.
+- разные исходы — включая мрачно-успешные — допустимы;
+- проект ведём как маленькую полноценную game studio.
 
-## Что уже сделано
+## Roadmap-ориентир по волнам
 
-### PR #1 — initial prototype
+См. `docs/ROADMAP.md` для актуального состояния и `docs/PRODUCT_DECISIONS.md` для нерешённых продуктовых вопросов и текущих рекомендаций. Коротко:
 
-Ссылка: `https://github.com/alexbayov/cult-sim-prototype/pull/1`
+- **Wave 0 / 0.5** — vertical slice + второй кейс + reset-with-confirm (закрыто).
+- **Wave 1** — depth helpers, season shell + progress persist, Yandex adapter stub, visible-language validator, product decisions doc, mobile polish (закрыто).
+- **Wave 2** — resolution clarity, achievements persist, report.thresholds optional, vestigial cleanup + demo QA checklist + roadmap refresh, docs editorial (в работе).
+- **Wave 3** — Yandex iframe build + smoke, контент-доработки и UI-следы открытых продуктовых решений (см. PRODUCT_DECISIONS).
 
-Сделано:
-
-- React/Vite прототип;
-- участники;
-- карты;
-- метрики;
-- комбо;
-- журнал;
-- финальный разбор.
-
-### PR #2 — studio roadmap foundation
-
-Ссылка: `https://github.com/alexbayov/cult-sim-prototype/pull/2`
-
-Сделано:
-
-- `docs/ROADMAP.md`
-- `docs/BACKLOG.md`
-- `docs/AGENT_BRIEF.md`
-- `docs/METRICS.md`
-- `docs/CONTENT_MODEL.md`
-- CSV-таблицы для баланса и аналитики.
-
-### PR #3 — playable foundation
-
-Ссылка: `https://github.com/alexbayov/cult-sim-prototype/pull/3`
-
-Сделано:
-
-- localStorage save/load;
-- save schema version;
-- scenario content schema;
-- art direction;
-- asset manifest.
-
-### PR #4 — orchestration workflow
-
-Ссылка: `https://github.com/alexbayov/cult-sim-prototype/pull/4`
-
-Сделано:
-
-- `docs/ORCHESTRATION.md`;
-- conductor/dev workflow;
-- brief template;
-- smoke commands.
-
-### PR #5 — JSON content migration
-
-Ссылка: `https://github.com/alexbayov/cult-sim-prototype/pull/5`
-
-Статус на момент написания: open.
-
-Сделано:
-
-- сценарий вынесен в `src/game/scenarios/info-business-marathon.json`;
-- `src/game/data.ts` стал thin loader;
-- включён `resolveJsonModule`;
-- docs обновлены под JSON workflow;
-- Canva visual bible добавлен в `asset_manifest.csv`.
-
-## Текущая структура
-
-```txt
-src/game/types.ts
-src/game/contentSchema.ts
-src/game/scenarios/info-business-marathon/
-  scenario.json
-  participants.json
-  cards.json
-  combos.json
-src/game/data.ts
-src/game/engine.ts
-src/game/storage.ts
-src/App.tsx
-
-docs/ROADMAP.md
-docs/BACKLOG.md
-docs/AGENT_BRIEF.md
-docs/METRICS.md
-docs/CONTENT_MODEL.md
-docs/ART_DIRECTION.md
-docs/ORCHESTRATION.md
-docs/CONDUCTOR_HANDOFF.md
-docs/tables/*.csv
-```
-
-## Главная стратегия
-
-### Не идти сразу в production
+## Главная стратегия публикации
 
 Порядок:
 
-1. Web vertical slice.
-2. Контент и баланс.
-3. Mobile-first layout.
-4. Yandex Games SDK.
+1. Web vertical slice → готово.
+2. Контент и баланс → второй кейс готов; третий — отдельной волной.
+3. Mobile-first layout → выполнено (390×844 cmd-line чеки в `docs/DEMO_QA_CHECKLIST.md`).
+4. Yandex Games SDK → adapter готов как stub; iframe build — Wave 3.
 5. Public MVP на Яндекс Играх.
 6. Только потом Google Play / iOS.
 
-### Почему
-
-Яндекс Игры принимает web build. Текущий React/Vite проект уже естественно собирается в static HTML/CSS/JS. Поэтому не нужно сейчас переносить в Unity/Godot.
-
-## Roadmap на ближайшие раунды
-
-### Раунд 1 — после merge PR #5
-
-Цель: сделать контентную базу удобной.
-
-PR-кандидаты:
-
-1. Split scenario JSON — сделано в ветке `devin/split-scenario-json`:
-   - `src/game/scenarios/info-business-marathon/scenario.json`
-   - `src/game/scenarios/info-business-marathon/participants.json`
-   - `src/game/scenarios/info-business-marathon/cards.json`
-   - `src/game/scenarios/info-business-marathon/combos.json`
-2. Add finale data to JSON (`finales.json` рядом с остальными).
-3. Add content validation script.
-
-### Раунд 2 — playable loop v2
-
-Цель: сделать игру игрой, а не последовательным кликом карт.
-
-Задачи:
-
-- 2–3 действия за неделю;
-- отдельный crisis slot;
-- реакция на кризис;
-- стоимость/лимиты действий;
-- более явный финальный экран;
-- разные финалы по стратегии.
-
-### Раунд 3 — mobile-first/Yandex readiness
-
-Цель: подготовить к Яндекс Играм.
-
-Задачи:
-
-- responsive layout 390×844;
-- нижняя панель карт;
-- collapsible metrics;
-- platform storage adapter;
-- Yandex SDK adapter stub;
-- loading/splash.
-
-### Раунд 4 — content expansion
-
-Цель: первый сценарий должен держать 10–15 минут.
-
-Задачи:
-
-- 30–50 карт;
-- 10–15 комбо;
-- 8–10 кризисов;
-- 6–8 финалов;
-- больше debrief tags;
-- таблицы баланса.
-
-### Раунд 5 — visual integration
-
-Цель: заменить placeholder UI на узнаваемый стиль.
-
-Задачи:
-
-- 6 портретов;
-- 3 card templates;
-- metric icons;
-- фон доски дела;
-- подключить ассеты из manifest.
-
-## Canva / визуал
-
-Пользователь дал Canva link:
-
-`https://canva.link/o74p4lf29vldb0o`
-
-Проблема: в текущей сессии ссылка открылась, но Canva остановилась на Cloudflare verify human, поэтому макет не виден.
-
-Что просить у пользователя:
-
-1. export PNG/JPG/PDF и прикрепить сюда;
-2. или публичный view/comment link, который открывается без login/Cloudflare;
-3. или отдельный board со страницами:
-   - Moodboard
-   - Participants
-   - Card Types
-   - Metric Icons
-   - Backgrounds
-   - Rejected/Archive
-
-Первые ассеты:
-
-- `participant_anya`
-- `participant_ilya`
-- `participant_marina`
-- `participant_danya`
-- `participant_sveta`
-- `participant_oleg`
-- `card_practice_template`
-- `card_crisis_template`
-- `card_counter_template`
-- `bg_case_board`
-- `icon_metric_set`
-
-Смотреть `docs/ART_DIRECTION.md` и `docs/tables/asset_manifest.csv`.
+Яндекс Игры принимает web build. Текущий React/Vite проект уже естественно собирается в static HTML/CSS/JS. Поэтому Unity/Godot перенос пока не нужен.
 
 ## Orchestration mode
 
-Использовать, когда хотим экономить контекст и делать параллельно.
+Используем для параллельных Devin-сессий и экономии контекста. Текущая модель — «дирижёр + параллельные девы»:
 
-Роль текущей/следующей основной сессии:
+- дирижёр пишет briefs и ревьюит PR;
+- девы получают brief в виде `dev*-brief.md` и работают на отдельной ветке `devin/<тема>`;
+- ветки нельзя ронять друг на друга — каждый brief получает явный список «MUST NOT touch» и «MAY touch».
 
-- дирижёр;
-- не пишет много кода, если запущены девы;
-- пишет briefs;
-- ревьюит PR;
-- даёт smoke commands;
-- держит roadmap.
+Подробнее — в `docs/ORCHESTRATION.md`.
 
-## Готовые brief-заготовки
+### Правила brief-заготовок (swap-friendly)
 
-### Dev 1 — Split JSON scenario files — сделано
+Каждый brief должен включать:
 
-Ветка: `devin/split-scenario-json`. Сценарий разложен по отдельным файлам в `src/game/scenarios/info-business-marathon/`. Наружу движок по-прежнему видит единственный `infoBusinessMarathonScenario: ScenarioContent` из `src/game/data.ts`.
+- цель и объём (одной фразой);
+- список «MAY touch» и «MUST NOT touch»;
+- pre/post acceptance checklist;
+- какие команды прогнать (`validate:investigation`, `lint`, `build`, `audit:balance`, `audit:visible-language`);
+- PR description template — чтобы дев мог собрать PR body без дополнительного контекста.
 
-Дальше по этой линии остались finales/debrief-словарь (отдельными PR-ами) и content validation script.
-
-### Dev 2 — Mobile-first layout
-
-Branch: `devin/mobile-layout`
-
-Контекст:
-
-Яндекс Игры и будущий mobile требуют удобный вертикальный интерфейс.
-
-Что менять:
-
-- `src/App.css`;
-- возможно минимально `src/App.tsx`;
-- сделать layout для 390×844;
-- cards/participants/metrics должны быть доступны без горизонтального скролла.
-
-Acceptance criteria:
-
-- desktop не сломан;
-- mobile usable;
-- build/lint проходят.
-
-Что НЕ делать:
-
-- не менять game engine;
-- не менять content JSON.
-
-### Dev 3 — Art asset integration stub
-
-Branch: `devin/art-asset-stub`
-
-Контекст:
-
-Пользователь будет генерировать визуал. Нужны безопасные точки подключения ассетов.
-
-Что менять:
-
-- создать папки `src/assets/art/...`;
-- добавить placeholder manifest mapping в коде;
-- подготовить компонент/utility для participant avatar и card art;
-- не требовать реальные картинки.
-
-Acceptance criteria:
-
-- если ассета нет, UI показывает текущий fallback;
-- если ассет добавлен по manifest path, его можно подключить;
-- build/lint проходят.
-
-Что НЕ делать:
-
-- не коммитить большие тяжёлые картинки без оптимизации;
-- не менять баланс.
-
-## Smoke commands
-
-Всегда:
-
-```bash
-npm install
-npm run build
-npm run lint
-```
-
-Для ручной проверки:
-
-```bash
-npm run dev
-```
-
-Smoke checklist:
-
-1. открыть игру;
-2. выбрать 2–3 карты;
-3. проверить изменение метрик;
-4. проверить журнал;
-5. refresh страницы;
-6. проверить save/load;
-7. нажать «новая партия»;
-8. проверить reset.
+Если brief короткий и не имеет «MUST NOT touch» — считать его недописанным, не запускать.
 
 ## Текущие риски
 
-1. Git push через стандартный proxy давал 403, поэтому ветки/PR создавались через GitHub API с PAT.
-2. Canva может блокировать просмотр через Cloudflare.
-3. Пока нет CI.
-4. Пока контентный JSON большой единый.
-5. Пока нет mobile-first UX.
+1. Git push через стандартный Devin proxy раньше падал с 403; сейчас работаем через PAT `GITHUB_PAT_CULT_SIM_PROTOTYPE` (org-scope, прямой `https://github.com/...` URL). PR создаём через REST API + `git_pr action=take_over`. Документ knowledge об этом сохранён.
+2. CI отсутствует — нет `.github/workflows/`. Все чеки прогоняются локально перед PR.
+3. visible-language валидатор сейчас даёт 5 warnings на main; контент намеренно не правится в каждом ширинном PR — отдельные content-only PR по мере необходимости. См. `docs/PRODUCT_DECISIONS.md` §1 (red-herring filter) и §3 (achievements UI).
+4. Yandex iframe — пока stub; реальный SDK-режим включается под флагом, продакшен-сборка — Wave 3.
 
-## Немедленный следующий шаг
+## Что делать дальше
 
-Если PR #5 ещё открыт:
-
-1. попросить пользователя замержить PR #5;
-2. после merge подтянуть main;
-3. начать orchestration round:
-   - Dev 1: split JSON;
-   - Dev 2: mobile layout;
-   - Dev 3 или человек: visual assets.
-
-Если не хотим параллелить:
-
-1. сначала split JSON;
-2. потом mobile layout;
-3. потом asset integration.
+1. Прочитать `docs/ROADMAP.md` (текущая волна и что висит).
+2. Прочитать `docs/PRODUCT_DECISIONS.md` (что открыто, какие рекомендации).
+3. Прочитать `docs/DEMO_QA_CHECKLIST.md` (что должно работать перед демо).
+4. Запросить brief у дирижёра или взять следующий из списка Wave 2/3 (см. ROADMAP).
