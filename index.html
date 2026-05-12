@@ -8,8 +8,10 @@
   </head>
   <body>
     <div id="root"></div>
-    <!-- enable for Yandex iframe build only — see docs/YANDEX_INTEGRATION.md -->
-    <!-- <script src="https://yandex.ru/games/sdk/v2"></script> -->
+    <!-- Yandex Games SDK placeholder. The default `npm run build` emits this comment as-is.
+         `npm run build:yandex` (scripts/build-yandex-iframe.mjs) replaces it with the real
+         SDK script tag. See docs/YANDEX_INTEGRATION.md. -->
+    <!-- yandex-sdk-script-placeholder -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
