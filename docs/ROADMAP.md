@@ -1,197 +1,36 @@
 # Roadmap
 
-Цель проекта — постепенно довести прототип до браузерной игры, готовой к публикации на Яндекс Играх, а затем при успехе адаптировать под Google Play / iOS.
+Where the prototype is, what's in flight, and what's queued. This file replaces the pre-pivot card-scenario roadmap (see closed PRs #8 / #9 for archive context); the live investigative-dossier model lives in `src/game/cases/*`, `src/game/investigation/*`, and `src/investigation/*`.
 
-## Принцип работы
+Open product questions and their current recommendations live in `docs/PRODUCT_DECISIONS.md`. Pre-demo smoke is in `docs/DEMO_QA_CHECKLIST.md`.
 
-Мы ведём проект как маленькая игровая студия:
+## Where we are
 
-1. Сначала делаем работающий vertical slice.
-2. Потом расширяем контент и баланс.
-3. Затем готовим платформенную обвязку.
-4. После публикации смотрим метрики, а не спорим на вкус.
+- **Wave 0** — `info-business-marathon` vertical slice (#10–#19): case loop, materials, bookmarks, draft summary, разбор, achievements (session-only).
+- **Wave 0.5** — second case `family-retreat-center` (#20), reset-with-confirm (#25).
+- **Wave 1** — depth + scaffolding (#26 mobile polish, #27 product decisions doc, #28 visible-language validator, #29 depth helpers, #30 season shell + progress persist, #31 Yandex SDK adapter stub).
 
-Каждый следующий PR должен отвечать на вопрос: он улучшает **игровую петлю**, **контент**, **платформенную готовность**, **метрики** или **производственный процесс**?
+## Wave 2 (in flight)
 
-## Текущее состояние
+- **Dev Q** — resolution clarity pass (rationale + next-checks + tone polish).
+- **Dev Y** — `report.thresholds` → optional (validator-only contract).
+- **Dev Z** — achievements persist in localStorage (storage layer).
+- **Dev D** — vestigial cleanup + this roadmap + demo QA checklist (this PR).
 
-Есть MVP-прототип:
+## Wave 3 (queued, open product questions)
 
-- React/Vite web app.
-- Один сценарий: инфоцыганский марафон личной эффективности.
-- Участники, карты, групповые метрики, скрытые теги, комбо, журнал, красные флаги, финал.
-- Деплой-превью: `https://dist-dwabckan.devinapps.com`.
-- Репозиторий: `alexbayov/cult-sim-prototype`.
+- `isRedHerring` filter flip (`docs/PRODUCT_DECISIONS.md` §1) — content review of every red-herring fragment.
+- Reliability overlay in source pane (UI-only).
+- Contradiction badge in selected pane.
+- Achievements UI: surface `persistedEarnedAchievementIds` (consumes Dev Z's storage layer).
+- Yandex iframe build + smoke recording (uses Dev V's stub, see `docs/YANDEX_INTEGRATION.md`).
+- Second-case editorial pass (`family-retreat-center` content polish).
 
-## Фаза 0 — Studio foundation
+## Open questions
 
-Статус: текущая фаза.
+See `docs/PRODUCT_DECISIONS.md` for the live list of unresolved product questions and current recommendations.
 
-Цель: зафиксировать процесс, документы, таблицы и правила принятия решений.
+## Deferred / parked
 
-### Deliverables
-
-- `docs/ROADMAP.md` — куда идём.
-- `docs/BACKLOG.md` — что висит.
-- `docs/AGENT_BRIEF.md` — инструкция следующему агенту.
-- `docs/METRICS.md` — что измеряем.
-- `docs/CONTENT_MODEL.md` — как проектировать карты, участников, комбо.
-- `docs/tables/*.csv` — рабочие таблицы для контента и баланса.
-
-### Definition of done
-
-- Следующий агент может открыть README и понять ближайшие задачи.
-- Есть список приоритетов.
-- Есть таблицы, куда можно добавлять карты, участников, комбо, финалы.
-
-## Фаза 1 — Playable vertical slice
-
-Цель: партия на 10–15 минут должна ощущаться как игра, а не демо интерфейса.
-
-### Что сделать
-
-1. **Улучшить loop**
-   - ввести стоимость выбора карты;
-   - добавить ограничение действий за неделю;
-   - сделать события не полностью предсказуемыми;
-   - добавить выбор реакции на кризисы;
-   - сделать финалы более зависящими от стратегии.
-
-2. **Сохранение**
-   - localStorage save/load;
-   - кнопка сброса прогресса;
-   - версия save schema.
-
-3. **Мобильный UX**
-   - проверить 360–430px ширину;
-   - сделать cards-first поток;
-   - убрать горизонтальные перегрузы;
-   - крупные кнопки.
-
-4. **Первый баланс**
-   - каждая партия должна иметь 2–4 заметных комбо;
-   - финал должен наступать не случайно, а как результат паттерна;
-   - вред/видимость/сомнение не должны быть просто «плохими очками», они должны менять решения.
-
-### Definition of done
-
-- Можно дать ссылку человеку и он сам поймёт, что делать.
-- Партия заканчивается финалом.
-- После финала хочется сыграть ещё раз и попробовать другой путь.
-
-## Фаза 2 — Content expansion
-
-Цель: сделать первый сценарий содержательным и реиграбельным.
-
-### Инфоцыганский сценарий
-
-Нужно довести до:
-
-- 8–10 участников;
-- 50–70 карт;
-- 15–20 комбо;
-- 8–10 кризисов;
-- 6–8 финалов;
-- 20–30 debrief-тегов.
-
-### Следующие сценарии-кандидаты
-
-1. Псевдопсихологический тренинг.
-2. Йога/эзотерическая студия.
-3. Корпоративная культура, которая становится бизнес-сектой.
-4. Конспирологический онлайн-чат.
-5. Кружок кройки и шитья, который мутирует в культ.
-
-### Definition of done
-
-- Контент лежит в данных, а не зашит в UI.
-- Можно добавить новую карту без изменения движка.
-- Есть таблица баланса, где видны теги, эффекты и риски.
-
-## Фаза 3 — Yandex Games foundation
-
-Цель: подготовить web app к публикации на Яндекс Играх.
-
-### Технически
-
-- подключить Yandex Games SDK;
-- сделать SDK adapter, чтобы игра работала и вне Яндекса;
-- сохранить прогресс через Yandex SDK, fallback в localStorage;
-- подготовить fullscreen/responsive;
-- добавить loading state;
-- добавить build profile для Yandex Games.
-
-### Продуктово
-
-- определить рейтинг;
-- убрать/смягчить формулировки, которые могут конфликтовать с модерацией;
-- тяжёлые темы показывать через последствия без инструктивных деталей;
-- подготовить short/long description;
-- подготовить иконки и скриншоты.
-
-### Монетизация для первой версии
-
-Без агрессивного F2P.
-
-Допустимые варианты:
-
-- interstitial ads между партиями;
-- rewarded ads за дополнительный разбор дела, архивный документ или косметический элемент;
-- без pay-to-win и без награды за «более жёсткие» практики.
-
-### Definition of done
-
-- Игра запускается как standalone web app.
-- Игра запускается внутри Yandex Games iframe.
-- Сейвы работают.
-- Реклама интегрирована безопасно и не ломает loop.
-
-## Фаза 4 — Public MVP
-
-Цель: первая публичная публикация.
-
-### Scope
-
-- 1–3 сценария;
-- 15–25 минут на партию;
-- архив дел;
-- словарь/разбор после финала;
-- мета-прогрессия;
-- базовая аналитика.
-
-### Метрики решения
-
-После публикации смотрим:
-
-- доходит ли игрок до первой выбранной карты;
-- доходит ли до финала;
-- сколько партий играет за сессию;
-- какие карты игнорирует;
-- какие финалы получает чаще всего;
-- возвращается ли на следующий день.
-
-## Фаза 5 — Google Play / iOS
-
-Переходить только если web/Yandex покажет интерес.
-
-### Возможные пути
-
-- PWA/TWA для Android.
-- Capacitor wrapper.
-- Отдельный Godot/Unity перенос — только если появится сильная потребность в нативности.
-
-### Риски
-
-- модерация чувствительного контента;
-- мобильный UX;
-- сохранения и аналитика;
-- требования магазинов к темам радикализации, самоповреждения, мошенничества.
-
-## Постоянные напоминания
-
-- Не начинать новый сценарий, пока первый loop не стал играбельным.
-- Не превращать карты в лекцию.
-- Не делать только «плохие кнопки» — обычные практики должны становиться опасными в сочетаниях.
-- Не романтизировать вред, но и не морализировать напрямую.
-- Любой новый контент должен иметь: surface text, hidden tags, effects, red flag, debrief tags.
-- Сначала web/Yandex, потом мобильные сторы.
+- **Card-based scenario model** (`src/game/engine.ts`, `src/game/contentSchema.ts`, `src/game/data.ts`, `src/game/scenarios/`, `src/game/storage.ts`). Removed in Dev D — see closed PRs #8 / #9 for archive context. Do not resurrect; new mechanics build on the investigation runtime.
+- **Direct mobile-store distribution** (PWA/TWA, Capacitor, Godot/Unity port). Re-evaluate only after web/Yandex traction.
