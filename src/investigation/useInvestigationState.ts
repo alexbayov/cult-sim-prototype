@@ -9,7 +9,7 @@
 // observations, draft summary) is produced by `buildDossierView` in the
 // view-model layer so that the React component stays a thin renderer.
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { InvestigationContent } from '../game/investigation/types'
 import {
@@ -22,6 +22,11 @@ import {
   type Resolution,
 } from './resolutionModel'
 import { createInteractionState } from './interactionModel'
+import {
+  clearProgress,
+  markStarted,
+  markSubmitted,
+} from './progressStorage'
 
 export type InvestigationState = {
   view: DossierView
@@ -60,6 +65,12 @@ export function useInvestigationState(
   const [openedMaterialIds, setOpenedMaterialIds] = useState<Set<string>>(
     () => new Set(initialOpenedMaterialIds),
   )
+
+  // Mark the case as «начат» the first time the dossier mounts for it.
+  // markStarted is idempotent and refreshes lastVisitedAt on re-entry.
+  useEffect(() => {
+    markStarted(content.case.id)
+  }, [content.case.id])
 
   const selection: Selection = useMemo(
     () => ({ selectedFragmentIds, reportSubmitted }),
@@ -118,14 +129,16 @@ export function useInvestigationState(
 
   const submitReport = useCallback(() => {
     setReportSubmitted(true)
-  }, [])
+    markSubmitted(content.case.id)
+  }, [content.case.id])
 
   const resetInvestigation = useCallback(() => {
     setSelectedFragmentIds(new Set())
     setReportSubmitted(false)
     setPickedMaterialId(null)
     setOpenedMaterialIds(new Set(initialOpenedMaterialIds))
-  }, [initialOpenedMaterialIds])
+    clearProgress(content.case.id)
+  }, [content.case.id, initialOpenedMaterialIds])
 
   const selectedCount = selectedFragmentIds.size
   const canSubmitReport = selectedCount > 0
