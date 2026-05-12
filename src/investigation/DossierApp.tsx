@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import './dossier.css'
 import type { InvestigationContent } from '../game/investigation/types'
 import { useInvestigationState } from './useInvestigationState'
@@ -112,6 +112,38 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
   // Inline confirmation for the destructive reset button: first click
   // arms it, second click runs `resetInvestigation`. No modal.
   const [resetArmed, setResetArmed] = useState(false)
+
+  // Transient «что изменилось» line under the progress chips. Lights up
+  // for ~4 s after a bookmark toggle, summarising the local deltas in
+  // selected fragments and unlocked materials. Pure local state; the
+  // view-model already produces the absolute counts we diff against.
+  const unlockedMaterialCount = view.selectionSummary.unlockedMaterialCount
+  const [whatChangedLine, setWhatChangedLine] = useState<string | null>(null)
+  const prevSelectedCount = useRef<number>(selectedCount)
+  const prevUnlockedMaterialCount = useRef<number>(unlockedMaterialCount)
+  useEffect(() => {
+    const selectedDelta = selectedCount - prevSelectedCount.current
+    const unlockedDelta =
+      unlockedMaterialCount - prevUnlockedMaterialCount.current
+    prevSelectedCount.current = selectedCount
+    prevUnlockedMaterialCount.current = unlockedMaterialCount
+    if (selectedDelta === 0 && unlockedDelta === 0) return
+    const parts: string[] = []
+    if (selectedDelta > 0) parts.push('добавлена закладка')
+    else if (selectedDelta < 0) parts.push('снята закладка')
+    parts.push('обновились наблюдения')
+    if (unlockedDelta > 0) {
+      const wordForm = unlockedDelta === 1 ? 'материал' : 'материала'
+      parts.push(`открыто ${unlockedDelta} ${wordForm}`)
+    } else if (unlockedDelta < 0) {
+      const n = -unlockedDelta
+      const wordForm = n === 1 ? 'материал' : 'материала'
+      parts.push(`закрыто ${n} ${wordForm}`)
+    }
+    setWhatChangedLine(parts.join(' · '))
+    const t = window.setTimeout(() => setWhatChangedLine(null), 4000)
+    return () => window.clearTimeout(t)
+  }, [selectedCount, unlockedMaterialCount])
   const handleResetClick = useCallback(() => {
     if (!resetArmed) {
       setResetArmed(true)
@@ -172,6 +204,15 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
         </ul>
         <p className="dossier-content-warning">
           <span aria-hidden="true">⚠</span> {view.contentWarning}
+        </p>
+        <p
+          className={
+            'dossier-what-changed' + (whatChangedLine ? ' is-visible' : '')
+          }
+          aria-live="polite"
+          role="status"
+        >
+          {whatChangedLine ?? '\u00a0'}
         </p>
         <ProgressNudge
           selectedCount={selectedCount}
@@ -342,6 +383,14 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
               <div className="dossier-source-body">
                 <div className="dossier-source-meta">
                   <h3>{activeMaterial.title}</h3>
+                  {activeMaterial.unlockedByFragment && (
+                    <p className="dossier-source-unlocked-by">
+                      <span className="dossier-source-unlocked-by-label">
+                        открыт закладкой:
+                      </span>{' '}
+                      «{activeMaterial.unlockedByFragment.fragmentText}»
+                    </p>
+                  )}
                   <p className="dossier-source-origin">
                     <span>{activeMaterial.origin}</span>
                     <span aria-hidden="true">·</span>
@@ -379,6 +428,20 @@ function DossierApp({ content, onBackToCases }: DossierAppProps) {
                           </span>
                         )}
                         <p className="dossier-fragment-text">{fragment.text}</p>
+                        {fragment.linkedPatternTitle && (
+                          <p className="dossier-fragment-link">
+                            <span className="dossier-fragment-link-label">
+                              связано с:
+                            </span>{' '}
+                            {fragment.linkedPatternTitle}
+                            {fragment.linkedPatternExtraCount > 0 && (
+                              <span className="dossier-fragment-link-extra">
+                                {' '}
+                                +{fragment.linkedPatternExtraCount}
+                              </span>
+                            )}
+                          </p>
+                        )}
                         {fragment.unlocksHint && (
                           <p className="dossier-fragment-hint">
                             {fragment.unlocksHint}

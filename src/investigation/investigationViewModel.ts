@@ -61,6 +61,12 @@ export type DossierViewMaterial = {
   reliabilityScore: number
   locked: boolean
   lockedHint: string | null
+  // When this material was opened by a player's bookmark, surface a short
+  // preview of the *first* bookmark (in selection insertion order) that
+  // unlocked it. Stays `null` for materials in `initialSourceIds` and for
+  // materials that are still locked. Preview is capped at 80 characters
+  // with ellipsis so the renderer can drop it inline without re-trimming.
+  unlockedByFragment: { fragmentId: string; fragmentText: string } | null
 }
 
 export type DossierViewFragment = {
@@ -71,6 +77,12 @@ export type DossierViewFragment = {
   highlighted: boolean
   selected: boolean
   unlocksHint: string | null
+  // Title of the first suggested pattern for this fragment, used to render
+  // a faint «связано с: …» line under the fragment text. `null` if the
+  // fragment has no suggested pattern. `linkedPatternExtraCount` is the
+  // number of *additional* suggested patterns (0 if only one).
+  linkedPatternTitle: string | null
+  linkedPatternExtraCount: number
 }
 
 export type DossierViewPerson = {
@@ -360,6 +372,7 @@ function computePatternConnection(
 function buildFragmentsBySource(
   content: InvestigationContent,
   selection: Selection,
+  patternById: Map<string, ControlPattern>,
 ): Record<string, DossierViewFragment[]> {
   const sourceById = new Map(content.sources.map((s) => [s.id, s]))
   const byId: Record<string, DossierViewFragment[]> = {}
@@ -374,6 +387,14 @@ function buildFragmentsBySource(
             .map((t) => `открывает материал: ${t}`)
             .join('; ') || null
         : null
+    const linkedPatternIds = e.suggestedPatternIds.filter((pid) =>
+      patternById.has(pid),
+    )
+    const linkedPatternTitle =
+      linkedPatternIds.length > 0
+        ? patternById.get(linkedPatternIds[0])?.title ?? null
+        : null
+    const linkedPatternExtraCount = Math.max(0, linkedPatternIds.length - 1)
     const f: DossierViewFragment = {
       id: e.id,
       sourceId: e.sourceId,
@@ -382,11 +403,59 @@ function buildFragmentsBySource(
       highlighted: e.weight >= 4 || e.riskTags.length >= 2,
       selected: selection.selectedFragmentIds.has(e.id),
       unlocksHint,
+      linkedPatternTitle,
+      linkedPatternExtraCount,
     }
     if (!byId[e.sourceId]) byId[e.sourceId] = []
     byId[e.sourceId].push(f)
   }
   return byId
+}
+
+function truncatePreview(text: string, max: number): string {
+  if (text.length <= max) return text
+  return text.slice(0, max - 1).trimEnd() + '…'
+}
+
+function computeUnlockedByFragment(
+  content: InvestigationContent,
+  selection: Selection,
+  unlockedIds: ReadonlySet<string>,
+): Map<string, { fragmentId: string; fragmentText: string }> {
+  const initial = new Set<string>(content.case.initialSourceIds)
+  const evidenceById = new Map(content.evidence.map((e) => [e.id, e]))
+  // Source -> set of evidence ids that can unlock it (either direction).
+  const unlockersBySource = new Map<string, Set<string>>()
+  for (const s of content.sources) {
+    if (initial.has(s.id)) continue
+    const set = new Set<string>(s.unlockedByEvidenceIds)
+    unlockersBySource.set(s.id, set)
+  }
+  for (const e of content.evidence) {
+    for (const sid of e.unlocksSourceIds) {
+      if (initial.has(sid)) continue
+      const set = unlockersBySource.get(sid)
+      if (set) set.add(e.id)
+      else unlockersBySource.set(sid, new Set<string>([e.id]))
+    }
+  }
+  const out = new Map<string, { fragmentId: string; fragmentText: string }>()
+  // Iterate selection in insertion order; the first selected fragment that
+  // is a valid unlocker for a still-unmapped material wins.
+  for (const fragmentId of selection.selectedFragmentIds) {
+    for (const [sourceId, unlockers] of unlockersBySource) {
+      if (out.has(sourceId)) continue
+      if (!unlockedIds.has(sourceId)) continue
+      if (!unlockers.has(fragmentId)) continue
+      const ev = evidenceById.get(fragmentId)
+      if (!ev) continue
+      out.set(sourceId, {
+        fragmentId,
+        fragmentText: truncatePreview(ev.text, 80),
+      })
+    }
+  }
+  return out
 }
 
 function makeObservation(
@@ -674,9 +743,15 @@ export function buildDossierView(
     reliabilityScore: s.reliability,
     locked: !unlockedIds.has(s.id),
     lockedHint: unlockedIds.has(s.id) ? null : lockedHintBySource.get(s.id) ?? null,
+    unlockedByFragment: unlockedByFragmentMap.get(s.id) ?? null,
   }))
 
-  const fragmentsBySource = buildFragmentsBySource(content, selection)
+  const fragmentsBySource = buildFragmentsBySource(content, selection, patternById)
+  const unlockedByFragmentMap = computeUnlockedByFragment(
+    content,
+    selection,
+    unlockedIds,
+  )
   const observations = buildPreviewObservations(
     evidence,
     sourceById,
