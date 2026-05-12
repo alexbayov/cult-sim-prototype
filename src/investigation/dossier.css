@@ -20,6 +20,7 @@
   position: relative;
   min-height: 100vh;
   padding: 16px;
+  overflow-x: hidden;
   color: var(--dossier-ink);
   font-family: var(--dossier-font-body);
   background-color: var(--dossier-paper);
@@ -161,8 +162,9 @@
 
 .dossier-progress-chips li {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 6px;
+  gap: 4px 6px;
   padding: 6px 10px;
   background-color: rgba(29, 22, 13, 0.06);
   border: 1px solid var(--dossier-rule);
@@ -262,8 +264,9 @@
   display: inline-flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 1px;
-  padding: 5px 9px;
+  gap: 2px;
+  min-height: 38px;
+  padding: 7px 10px;
   background-color: rgba(216, 199, 157, 0.5);
   border: 1px solid var(--dossier-rule);
   border-bottom: 2px solid transparent;
@@ -383,7 +386,11 @@
 }
 
 .dossier-fragment-mark {
-  padding: 5px 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 14px;
   background-color: transparent;
   border: 1px dashed var(--dossier-ink-faint);
   color: var(--dossier-ink-soft);
@@ -461,8 +468,12 @@
 }
 
 .dossier-evidence-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
   margin-top: 4px;
-  padding: 4px 10px;
+  padding: 7px 12px;
   background-color: transparent;
   border: 1px dashed var(--dossier-ink-faint);
   color: var(--dossier-ink-soft);
@@ -637,9 +648,10 @@
 
 .dossier-pattern-card header {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px 8px;
   margin-bottom: 6px;
 }
 
@@ -892,7 +904,10 @@
 }
 
 .dossier-report-outcomes > summary {
-  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 10px 2px;
   font-family: var(--dossier-font-label);
   font-size: 11px;
   letter-spacing: 0.16em;
@@ -944,12 +959,14 @@
 
 .dossier-report-reset-confirm-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
 .dossier-report-reset.is-confirm {
-  flex: 1;
+  flex: 1 1 130px;
   width: auto;
+  min-height: 38px;
   border-color: var(--dossier-red);
   color: var(--dossier-red);
 }
@@ -961,8 +978,9 @@
 }
 
 .dossier-report-reset-cancel {
-  flex: 1;
-  padding: 8px 14px;
+  flex: 1 1 130px;
+  min-height: 38px;
+  padding: 10px 14px;
   background-color: transparent;
   border: 1px dashed var(--dossier-rule);
   color: var(--dossier-ink-soft);
@@ -1505,12 +1523,13 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin: 0 0 10px;
-  padding: 6px 12px;
+  min-height: 40px;
+  margin: 0 0 12px;
+  padding: 9px 14px;
   background: var(--dossier-paper);
   border: 1px solid var(--dossier-rule);
   font-family: var(--dossier-font-label);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--dossier-ink);
@@ -1528,6 +1547,9 @@
     right: 24px;
     margin: 0;
     z-index: 2;
+    min-height: 0;
+    padding: 6px 12px;
+    font-size: 10px;
   }
 }
 
@@ -2024,5 +2046,37 @@
 
   .dossier-resolution-achievements ul {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* ---------- mobile polish (target 390x844) ---------- */
+
+@media (max-width: 719px) {
+  /* Materials card head: stack heading above tab strip so the tab buttons
+     get the full card width instead of being squeezed into the right half
+     by the h2 sibling. */
+  .dossier-source .dossier-card-head {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .dossier-source .dossier-card-head .dossier-source-tabs {
+    width: 100%;
+    margin: 0;
+  }
+
+  /* Person card head: the risk badge text (e.g. «высокий уровень риска»)
+     is too long for the right column on a 390px viewport, so the badge
+     drops below the name on its own row. */
+  .dossier-person-head {
+    grid-template-columns: 44px 1fr;
+    grid-template-rows: auto auto;
+    row-gap: 6px;
+  }
+
+  .dossier-person-head > :nth-child(3) {
+    grid-column: 1 / -1;
+    justify-self: start;
   }
 }
