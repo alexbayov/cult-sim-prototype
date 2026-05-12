@@ -51,6 +51,21 @@ if (caseDirs.length === 0) {
 const isInRange = (v, min, max) =>
   Number.isFinite(v) && v >= min && v <= max
 
+// Fallback used when `report.thresholds.minConfirmedPatternsForStrongOutcome`
+// is absent. `report.thresholds` is a validator-only authoring aid and is no
+// longer required by the type; the coverage check needs a concrete number to
+// classify outcomes as low / medium / strong.
+const DEFAULT_STRONG_THRESHOLD = 4
+
+const deriveStrongThreshold = (content) => {
+  let max = 0
+  for (const o of content.report.outcomes) {
+    const v = Number(o?.minPatternConfirmedCount)
+    if (Number.isFinite(v) && v > max) max = v
+  }
+  return max > 0 ? max : DEFAULT_STRONG_THRESHOLD
+}
+
 const dupes = (label, ids) => {
   const errs = []
   const seen = new Set()
@@ -239,7 +254,16 @@ function validateCase(caseDir) {
 
   // 5. Report outcome coverage: warn if low/medium/strong outcomes are missing.
   {
-    const strongThreshold = content.report.thresholds.minConfirmedPatternsForStrongOutcome
+    const authoredStrong =
+      content?.report?.thresholds?.minConfirmedPatternsForStrongOutcome
+    const strongThreshold = Number.isFinite(authoredStrong)
+      ? authoredStrong
+      : deriveStrongThreshold(content)
+    if (!content?.report?.thresholds) {
+      warnings.push(
+        `report.thresholds is absent; using derived strong threshold = ${strongThreshold} for coverage check`,
+      )
+    }
     let hasLow = false
     let hasMedium = false
     let hasStrong = false
