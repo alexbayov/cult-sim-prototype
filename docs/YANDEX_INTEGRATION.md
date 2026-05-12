@@ -31,20 +31,63 @@ ads, leaderboards, or payments.
 
 ## Enabling the real SDK in a Yandex iframe build
 
-The SDK script is intentionally **commented out** in `index.html` so local
-builds and any non-Yandex hosting remain SDK-free.
+The SDK script tag is intentionally **not present** in `dist/index.html` when
+you run the default `npm run build` — instead, `index.html` carries a
+placeholder comment `<!-- yandex-sdk-script-placeholder -->` that emits
+verbatim. Local builds and any non-Yandex hosting therefore ship a bundle
+with zero references to the Yandex CDN.
 
-To produce a Yandex-iframe-ready build:
+To produce a Yandex-iframe-ready bundle, run:
 
-1. Open `index.html`.
-2. Uncomment the line:
-   ```html
-   <!-- <script src="https://yandex.ru/games/sdk/v2"></script> -->
-   ```
-3. Run `npm run build` and upload `dist/` to the Yandex Games console.
+```bash
+$ npm run build:yandex
+```
 
-No TypeScript or app code changes are required — the adapter detects
-`window.YaGames` at runtime and switches from stub to real automatically.
+This invokes `scripts/build-yandex-iframe.mjs`, which runs the standard
+`vite build` and then post-processes `dist/index.html` to replace the
+placeholder with a live `<script src="https://yandex.ru/games/sdk/v2"></script>`
+tag (plus a one-line provenance banner so the post-process is visible in the
+emitted HTML). No TypeScript or app code changes are required — the adapter
+detects `window.YaGames` at runtime and switches from stub to real
+automatically.
+
+To produce a ZIP ready for Yandex Games console upload, run:
+
+```bash
+$ npm run package:yandex   # → yandex-iframe.zip in the repo root
+```
+
+The packaging step is `cd dist && zip -r ../yandex-iframe.zip .`, so any host
+with the standard `zip` CLI (Ubuntu / macOS / WSL) works out of the box. The
+emitted ZIP is gitignored.
+
+### Verifying the Yandex iframe bundle locally
+
+After `npm run build:yandex` the bundle is in `dist/` and can be served by
+any static file server. The quickest recipe:
+
+```bash
+$ npm run build:yandex
+$ npx serve dist -l 4173
+```
+
+Open `http://localhost:4173/` in a browser and confirm:
+
+- The case picker renders.
+- DevTools → Network shows a request to `https://yandex.ru/games/sdk/v2`.
+- DevTools → Console contains **no uncaught exceptions from app code**. The
+  Yandex SDK itself may log `Error: No parent to post message` when loaded
+  outside an actual Yandex iframe — that is the SDK's own postMessage probe
+  failing, and the adapter at `src/platform/yandex.ts` is designed to catch
+  those errors and silently fall back to the stub. `getEnvironment()` will
+  return `{ available: false, ... }` in this local-serve scenario, which is
+  the documented graceful-degradation path, not a bug.
+
+For a reproducible / scriptable check, a small Playwright or CDP probe that
+loads the served bundle and asserts (a) the SDK `<script>` tag is in the
+served HTML, (b) `#root` has rendered children, and (c) there are no
+app-side exceptions, is preferred over manual DevTools inspection. The PR
+that introduced `build:yandex` includes such a probe in its description.
 
 ## Where the SDK docs live
 
