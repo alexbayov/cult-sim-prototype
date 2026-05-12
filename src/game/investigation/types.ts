@@ -130,10 +130,14 @@ export type ControlPattern = {
   debriefText: string
 }
 
+// Validator-only authoring hints. Runtime outcome selection uses per-outcome
+// `minPatternConfirmedCount` instead. Keeping these in `report.json` is
+// recommended but no longer required; the validator falls back to a derived
+// default when the block is absent.
 export type ReportThresholds = {
-  minConfirmedPatternsForStrongOutcome: number
-  maxContradictionsBeforeWeakOutcome: number
-  riskPersonsThreshold: number
+  minConfirmedPatternsForStrongOutcome?: number
+  maxContradictionsBeforeWeakOutcome?: number
+  riskPersonsThreshold?: number
 }
 
 export type ReportOutcome = {
@@ -148,7 +152,7 @@ export type ReportOutcome = {
 }
 
 export type ReportContent = {
-  thresholds: ReportThresholds
+  thresholds?: ReportThresholds
   outcomes: ReportOutcome[]
   sections: ReportSectionId[]
 }
