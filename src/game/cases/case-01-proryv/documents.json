@@ -1,0 +1,58 @@
+[
+  {
+    "id": "doc-personal-thread",
+    "type": "personal",
+    "title": "[заглушка — название от Дева β]",
+    "source": "[заглушка — источник от Дева β]",
+    "body": "[заглушка — текст от Дева β]",
+    "keyPhrases": [],
+    "defaultVisible": true
+  },
+  {
+    "id": "doc-chat-close-circle",
+    "type": "chat",
+    "title": "[заглушка — название от Дева β]",
+    "source": "[заглушка — источник от Дева β]",
+    "body": "[заглушка — текст от Дева β]",
+    "keyPhrases": [],
+    "defaultVisible": true
+  },
+  {
+    "id": "doc-social-post",
+    "type": "social",
+    "title": "[заглушка — название от Дева β]",
+    "source": "[заглушка — источник от Дева β]",
+    "body": "[заглушка — текст от Дева β]",
+    "keyPhrases": [],
+    "defaultVisible": true
+  },
+  {
+    "id": "doc-clipping-2018",
+    "type": "clipping",
+    "title": "[заглушка — название от Дева β]",
+    "source": "[заглушка — источник от Дева β]",
+    "body": "[заглушка — текст от Дева β]",
+    "keyPhrases": [],
+    "defaultVisible": true
+  },
+  {
+    "id": "doc-emails-client",
+    "type": "document",
+    "title": "[заглушка — название от Дева β]",
+    "source": "[заглушка — источник от Дева β]",
+    "body": "[заглушка — текст от Дева β]",
+    "keyPhrases": [],
+    "defaultVisible": false,
+    "unlockedByAction": "act-request-client-docs"
+  },
+  {
+    "id": "doc-clipping-archive",
+    "type": "clipping",
+    "title": "[заглушка — название от Дева β]",
+    "source": "[заглушка — источник от Дева β]",
+    "body": "[заглушка — текст от Дева β]",
+    "keyPhrases": [],
+    "defaultVisible": false,
+    "unlockedByAction": "act-archive-search"
+  }
+]

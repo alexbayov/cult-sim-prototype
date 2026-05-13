@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "v2",
+  "id": "case-01-proryv",
+  "title": "Прорыв — Сергей",
+  "protagonist": {
+    "name": "Дмитрий Стрелецкий",
+    "tagline": "частный психолог-эксперт"
+  },
+  "brief": {
+    "from": "Елена И. (мать)",
+    "body": "[заглушка — текст от Дева β]"
+  },
+  "actionBudget": 6
+}

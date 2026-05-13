@@ -1,0 +1,65 @@
+[
+  {
+    "id": "ep-wait-precise-6",
+    "recommendationId": "rec-wait",
+    "quality": "precise",
+    "body": "[заглушка — текст от Дева β]",
+    "monthsAhead": 6
+  },
+  {
+    "id": "ep-wait-imprecise-12",
+    "recommendationId": "rec-wait",
+    "quality": "imprecise",
+    "body": "[заглушка — текст от Дева β]",
+    "monthsAhead": 12
+  },
+  {
+    "id": "ep-wait-incorrect-3",
+    "recommendationId": "rec-wait",
+    "quality": "incorrect",
+    "body": "[заглушка — текст от Дева β]",
+    "monthsAhead": 3
+  },
+  {
+    "id": "ep-intervene-precise-3",
+    "recommendationId": "rec-intervene",
+    "quality": "precise",
+    "body": "[заглушка — текст от Дева β]",
+    "monthsAhead": 3
+  },
+  {
+    "id": "ep-intervene-imprecise-6",
+    "recommendationId": "rec-intervene",
+    "quality": "imprecise",
+    "body": "[заглушка — текст от Дева β]",
+    "monthsAhead": 6
+  },
+  {
+    "id": "ep-intervene-incorrect-12",
+    "recommendationId": "rec-intervene",
+    "quality": "incorrect",
+    "body": "[заглушка — текст от Дева β]",
+    "monthsAhead": 12
+  },
+  {
+    "id": "ep-respect-precise-12",
+    "recommendationId": "rec-respect-choice",
+    "quality": "precise",
+    "body": "[заглушка — текст от Дева β]",
+    "monthsAhead": 12
+  },
+  {
+    "id": "ep-respect-imprecise-6",
+    "recommendationId": "rec-respect-choice",
+    "quality": "imprecise",
+    "body": "[заглушка — текст от Дева β]",
+    "monthsAhead": 6
+  },
+  {
+    "id": "ep-respect-incorrect-3",
+    "recommendationId": "rec-respect-choice",
+    "quality": "incorrect",
+    "body": "[заглушка — текст от Дева β]",
+    "monthsAhead": 3
+  }
+]

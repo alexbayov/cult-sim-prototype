@@ -1,0 +1,42 @@
+[
+  {
+    "id": "rec-wait",
+    "label": "Переждать + тёплый контакт",
+    "body": "[заглушка — текст от Дева β]",
+    "requiresHypotheses": [
+      {
+        "hypothesisId": "h-isolation",
+        "minSupportingPhrases": 1,
+        "minWeight": "weak"
+      },
+      {
+        "hypothesisId": "h-mentor-dep",
+        "minSupportingPhrases": 1,
+        "minWeight": "weak"
+      }
+    ]
+  },
+  {
+    "id": "rec-intervene",
+    "label": "Срочное юридическое + очный контакт",
+    "body": "[заглушка — текст от Дева β]",
+    "requiresHypotheses": [
+      {
+        "hypothesisId": "h-financial",
+        "minSupportingPhrases": 2,
+        "minWeight": "strong"
+      },
+      {
+        "hypothesisId": "h-isolation",
+        "minSupportingPhrases": 1,
+        "minWeight": "weak"
+      }
+    ]
+  },
+  {
+    "id": "rec-respect-choice",
+    "label": "Это его выбор",
+    "body": "[заглушка — текст от Дева β]",
+    "requiresHypotheses": []
+  }
+]

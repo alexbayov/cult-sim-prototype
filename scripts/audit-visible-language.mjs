@@ -23,7 +23,10 @@ import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
 import { join, dirname, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { scanInvestigationContent } from './lib/visible-language.mjs'
+import {
+  scanCaseV2Content,
+  scanInvestigationContent,
+} from './lib/visible-language.mjs'
 import { scanDraftDirectories } from './lib/draft-language.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -48,7 +51,7 @@ if (caseDirs.length === 0) {
   process.exit(0)
 }
 
-function loadCase(caseDir) {
+function loadCaseV1(caseDir) {
   const load = (file) => JSON.parse(readFileSync(join(caseDir, file), 'utf8'))
   return {
     case: load('case.json'),
@@ -61,22 +64,56 @@ function loadCase(caseDir) {
   }
 }
 
+function loadCaseV2(caseDir) {
+  const load = (file) => JSON.parse(readFileSync(join(caseDir, file), 'utf8'))
+  return {
+    case: load('case.json'),
+    hypotheses: load('hypotheses.json'),
+    documents: load('documents.json'),
+    contacts: load('contacts.json'),
+    interviews: load('interviews.json'),
+    actions: load('actions.json'),
+    recommendations: load('recommendations.json'),
+    epilogues: load('epilogues.json'),
+  }
+}
+
 let totalWarnings = 0
 
 for (const caseDir of caseDirs) {
-  let content
+  // Peek at case.json first so we can dispatch on schemaVersion. The full v1
+  // loader bails if any auxiliary file is missing (e.g. persons.json), and we
+  // do not want a v2 case to fall through to the v1 loader.
+  let caseJson
   try {
-    content = loadCase(caseDir)
+    caseJson = JSON.parse(readFileSync(join(caseDir, 'case.json'), 'utf8'))
   } catch (err) {
-    console.log(`\n[${caseDir}] skipped — could not load case content (${err.message})`)
+    console.log(`\n[${caseDir}] skipped — could not load case.json (${err.message})`)
     continue
   }
 
-  const caseId = content.case?.id ?? caseDir
-  const warnings = scanInvestigationContent(content)
+  const schemaVersion = caseJson?.schemaVersion === 'v2' ? 'v2' : 'v1'
+  let warnings = []
+  let caseId = caseJson?.id ?? caseDir
+
+  try {
+    if (schemaVersion === 'v2') {
+      const bundle = loadCaseV2(caseDir)
+      caseId = bundle.case.id
+      warnings = scanCaseV2Content(bundle)
+    } else {
+      const content = loadCaseV1(caseDir)
+      caseId = content.case?.id ?? caseDir
+      warnings = scanInvestigationContent(content)
+    }
+  } catch (err) {
+    console.log(`\n[${caseId}] skipped — could not load case content (${err.message})`)
+    continue
+  }
+
   totalWarnings += warnings.length
 
-  console.log(`\n[${caseId}] ${warnings.length} visible-language warning${warnings.length === 1 ? '' : 's'}`)
+  console.log(`\n[${caseId}] (${schemaVersion}) ${warnings.length} visible-language warning${warnings.length === 1 ? '' : 's'}`)
   for (const w of warnings) {
     console.log(`  - ${w}`)
   }

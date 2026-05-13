@@ -66,10 +66,29 @@ function loadCase(caseId) {
 }
 
 function discoverCases() {
+  // Skip v2 cases: this audit models the v1 interactionModel
+  // (pattern × evidence × outcome). v2 cases use a different on-disk shape
+  // (hypotheses × documents × keyPhrases × recommendations) that this audit
+  // cannot reason about; trying to load them would crash on the missing
+  // persons.json / patterns.json / etc. A v2-aware balance audit is a
+  // separate follow-up.
   return readdirSync(CASES_DIR, { withFileTypes: true })
     .filter((d) => d.isDirectory())
     .map((d) => d.name)
-    .filter((name) => existsSync(join(CASES_DIR, name, 'case.json')))
+    .filter((name) => {
+      const caseFile = join(CASES_DIR, name, 'case.json')
+      if (!existsSync(caseFile)) return false
+      try {
+        const j = JSON.parse(readFileSync(caseFile, 'utf8'))
+        if (j?.schemaVersion === 'v2') {
+          console.log(`[${name}] skipped — v2 case (balance audit is v1-only)`)
+          return false
+        }
+      } catch {
+        return false
+      }
+      return true
+    })
     .sort()
 }
 
