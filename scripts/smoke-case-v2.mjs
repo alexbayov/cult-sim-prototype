@@ -181,6 +181,122 @@ for (const r of bundle.recommendations) {
   }
 }
 
+const highlightEffects = (highlight) => {
+  const document = bundle.documents.find((d) => d.id === highlight.documentId)
+  if (!document) return []
+  const byHypothesis = new Map()
+  for (const kp of document.keyPhrases ?? []) {
+    const [start, end] = highlight.range
+    const [kpStart, kpEnd] = kp.range
+    if (start >= kpEnd || end <= kpStart) continue
+    for (const effect of kp.effects ?? []) {
+      const previous = byHypothesis.get(effect.hypothesisId)
+      const rank = { counter: 1, weak: 2, strong: 3 }
+      if (!previous || rank[effect.weight] > rank[previous.weight]) {
+        byHypothesis.set(effect.hypothesisId, effect)
+      }
+    }
+  }
+  return [...byHypothesis.values()]
+}
+
+const countNotebookSlots = (highlights) => {
+  const counts = {}
+  for (const h of bundle.hypotheses) counts[h.id] = { weak: 0, strong: 0, counter: 0 }
+  for (const highlight of highlights) {
+    for (const effect of highlightEffects(highlight)) {
+      counts[effect.hypothesisId][effect.weight]++
+    }
+  }
+  return counts
+}
+
+const computeQuality = (recommendation, highlights) => {
+  if (recommendation.id === 'rec-respect-choice') {
+    if (highlights.length < 3) return 'precise'
+    if (highlights.length <= 6) return 'imprecise'
+    return 'incorrect'
+  }
+  const counts = countNotebookSlots(highlights)
+  const results = recommendation.requiresHypotheses.map((req) => {
+    const slot = counts[req.hypothesisId]
+    const available = req.minWeight === 'strong' ? slot.strong : slot.strong + slot.weak
+    return available >= req.minSupportingPhrases
+  })
+  if (results.every(Boolean)) return 'precise'
+  if (results.some(Boolean)) return 'imprecise'
+  return 'incorrect'
+}
+
+const resolveEpilogueId = (recommendationId, highlights) => {
+  const recommendation = bundle.recommendations.find((r) => r.id === recommendationId)
+  const quality = computeQuality(recommendation, highlights)
+  return bundle.epilogues.find(
+    (e) => e.recommendationId === recommendationId && e.quality === quality,
+  )?.id
+}
+
+const firstHighlight = (hypothesisId, weight) => {
+  for (const document of bundle.documents) {
+    for (const kp of document.keyPhrases ?? []) {
+      if (kp.effects?.some((effect) => effect.hypothesisId === hypothesisId && effect.weight === weight)) {
+        return { documentId: document.id, range: kp.range }
+      }
+    }
+  }
+  errors.push(`No test keyPhrase for ${hypothesisId}/${weight}`)
+  return null
+}
+
+const allTestHighlights = []
+for (const document of bundle.documents) {
+  for (const kp of document.keyPhrases ?? []) {
+    allTestHighlights.push({ documentId: document.id, range: kp.range })
+  }
+}
+const compact = (items) => items.filter(Boolean)
+const resolverStates = [
+  { name: 'empty', highlights: [] },
+  { name: 'sparse', highlights: compact([firstHighlight('h-mentor-dep', 'weak')]) },
+  { name: 'moderate', highlights: allTestHighlights.slice(0, 4) },
+  { name: 'dense', highlights: allTestHighlights.slice(0, 7) },
+  {
+    name: 'intervene-ready',
+    highlights: compact([
+      firstHighlight('h-financial', 'strong'),
+      firstHighlight('h-financial', 'strong'),
+      firstHighlight('h-isolation', 'weak'),
+    ]),
+  },
+  {
+    name: 'wait-ready',
+    highlights: compact([
+      firstHighlight('h-isolation', 'weak'),
+      firstHighlight('h-mentor-dep', 'weak'),
+    ]),
+  },
+]
+
+let resolverCombos = 0
+for (const state of resolverStates) {
+  for (const recommendation of bundle.recommendations) {
+    resolverCombos++
+    const epilogueId = resolveEpilogueId(recommendation.id, state.highlights)
+    if (!epilogueId || !bundle.epilogues.some((e) => e.id === epilogueId)) {
+      errors.push(
+        `Resolver combo ${state.name}/${recommendation.id} did not resolve to an epilogue`,
+      )
+    }
+  }
+}
+const intervenePrecise = resolveEpilogueId(
+  'rec-intervene',
+  resolverStates.find((state) => state.name === 'intervene-ready').highlights,
+)
+if (intervenePrecise !== 'ep-intervene-precise-3') {
+  errors.push(`rec-intervene precise fixture resolved to ${intervenePrecise}`)
+}
+
 // Visible-language scan: not an error gate, just surfaced.
 const languageWarnings = scanCaseV2Content(bundle)
 
@@ -194,6 +310,7 @@ console.log(
 )
 console.log(`  visible-language warnings: ${languageWarnings.length}`)
 for (const w of languageWarnings) console.log(`   - ${w}`)
+console.log(`  epilogue resolver combos: ${resolverCombos} checked`)
 
 // keyPhrase totals — per-hypothesis breakdown so it's obvious by eyeball
 // whether the wire-in step actually attached phrases to each hypothesis.

@@ -7,6 +7,7 @@ import type {
   InvestigationCase,
   InvestigationContent,
   ReportContent,
+  CaseV2,
   ReportOutcome,
 } from './types'
 
@@ -306,6 +307,157 @@ export const validateInvestigationContent = (
   ]
 }
 
+
+const validateCaseV2 = (content: CaseV2): string[] => {
+  const errors: string[] = []
+  if (content.schemaVersion !== 'v2') {
+    errors.push(`CaseV2 ${content.id} schemaVersion must be v2`)
+  }
+  if (!content.id) errors.push('CaseV2 is missing id')
+  if (!content.title) errors.push(`CaseV2 ${content.id} is missing title`)
+  if (!content.protagonist?.name) {
+    errors.push(`CaseV2 ${content.id} is missing protagonist.name`)
+  }
+  if (!content.brief?.from) errors.push(`CaseV2 ${content.id} is missing brief.from`)
+  if (!content.brief?.body) errors.push(`CaseV2 ${content.id} is missing brief.body`)
+  if (!Number.isFinite(content.actionBudget) || content.actionBudget < 0) {
+    errors.push(`CaseV2 ${content.id} actionBudget must be non-negative`)
+  }
+
+  errors.push(...collectDuplicateIds('hypothesis', content.hypotheses.map((h) => h.id)))
+  errors.push(...collectDuplicateIds('document', content.documents.map((d) => d.id)))
+  errors.push(...collectDuplicateIds('contact', content.contacts.map((c) => c.id)))
+  errors.push(...collectDuplicateIds('interview', content.interviews.map((i) => i.id)))
+  errors.push(...collectDuplicateIds('action', content.actions.map((a) => a.id)))
+  errors.push(
+    ...collectDuplicateIds('recommendation', content.recommendations.map((r) => r.id)),
+  )
+  errors.push(...collectDuplicateIds('epilogue', content.epilogues.map((e) => e.id)))
+
+  const hypothesisIds = new Set(content.hypotheses.map((h) => h.id))
+  const documentIds = new Set(content.documents.map((d) => d.id))
+  const contactIds = new Set(content.contacts.map((c) => c.id))
+  const interviewIds = new Set(content.interviews.map((i) => i.id))
+  const actionIds = new Set(content.actions.map((a) => a.id))
+  const recommendationIds = new Set(content.recommendations.map((r) => r.id))
+
+  for (const document of content.documents) {
+    if (!document.title) errors.push(`Document ${document.id} is missing title`)
+    if (!document.body) errors.push(`Document ${document.id} is missing body`)
+    for (let i = 0; i < document.keyPhrases.length; i++) {
+      const keyPhrase = document.keyPhrases[i]
+      const where = `Document ${document.id}.keyPhrases[${i}]`
+      const [start, end] = keyPhrase.range
+      if (start < 0 || end > document.body.length || start >= end) {
+        errors.push(`${where}.range out of [0, ${document.body.length}) or non-positive width`)
+      }
+      if (keyPhrase.effects.length === 0) errors.push(`${where}.effects must be non-empty`)
+      for (const effect of keyPhrase.effects) {
+        if (!hypothesisIds.has(effect.hypothesisId)) {
+          errors.push(`${where}.effects hypothesis unknown: ${effect.hypothesisId}`)
+        }
+        if (!['strong', 'weak', 'counter'].includes(effect.weight)) {
+          errors.push(`${where}.effects weight must be strong|weak|counter`)
+        }
+      }
+    }
+    if (document.unlockedByAction && !actionIds.has(document.unlockedByAction)) {
+      errors.push(`Document ${document.id} unlockedByAction unknown: ${document.unlockedByAction}`)
+    }
+  }
+
+  for (const contact of content.contacts) {
+    if (!interviewIds.has(contact.interviewId)) {
+      errors.push(`Contact ${contact.id} interviewId unknown: ${contact.interviewId}`)
+    }
+    const gate = contact.gateRequirement
+    if (gate?.requiredHypothesis && !hypothesisIds.has(gate.requiredHypothesis)) {
+      errors.push(
+        `Contact ${contact.id} gateRequirement.requiredHypothesis unknown: ${gate.requiredHypothesis}`,
+      )
+    }
+    if (gate?.requiredDocumentId && !documentIds.has(gate.requiredDocumentId)) {
+      errors.push(
+        `Contact ${contact.id} gateRequirement.requiredDocumentId unknown: ${gate.requiredDocumentId}`,
+      )
+    }
+    if (contact.initialState === 'gated' && !gate?.requiredHypothesis && !gate?.requiredDocumentId) {
+      errors.push(`Contact ${contact.id} is gated but has no gate requirement`)
+    }
+  }
+
+  for (const interview of content.interviews) {
+    if (!contactIds.has(interview.contactId)) {
+      errors.push(`Interview ${interview.id} contactId unknown: ${interview.contactId}`)
+    }
+    const nodeIds = new Set(interview.nodes.map((node) => node.id))
+    if (!nodeIds.has(interview.startNodeId)) {
+      errors.push(`Interview ${interview.id} startNodeId unknown: ${interview.startNodeId}`)
+    }
+    for (const node of interview.nodes) {
+      if (node.next !== undefined && !nodeIds.has(node.next)) {
+        errors.push(`Interview ${interview.id} node ${node.id} next unknown: ${node.next}`)
+      }
+      for (const choice of node.choices ?? []) {
+        if (!nodeIds.has(choice.next)) {
+          errors.push(
+            `Interview ${interview.id} node ${node.id} choice ${choice.id} next unknown: ${choice.next}`,
+          )
+        }
+        if (
+          choice.requiresPhraseFromHypothesis &&
+          !hypothesisIds.has(choice.requiresPhraseFromHypothesis)
+        ) {
+          errors.push(
+            `Interview ${interview.id} node ${node.id} choice ${choice.id} requiresPhraseFromHypothesis unknown: ${choice.requiresPhraseFromHypothesis}`,
+          )
+        }
+      }
+    }
+  }
+
+  for (const action of content.actions) {
+    if (action.cost < 0) errors.push(`Action ${action.id} cost must be non-negative`)
+    for (const effect of action.effects) {
+      if (effect.kind === 'unlockDocument' && !documentIds.has(effect.documentId)) {
+        errors.push(`Action ${action.id} unlockDocument unknown: ${effect.documentId}`)
+      }
+      if (effect.kind === 'unlockContact' && !contactIds.has(effect.contactId)) {
+        errors.push(`Action ${action.id} unlockContact unknown: ${effect.contactId}`)
+      }
+    }
+  }
+
+  for (const recommendation of content.recommendations) {
+    for (const requirement of recommendation.requiresHypotheses) {
+      if (!hypothesisIds.has(requirement.hypothesisId)) {
+        errors.push(
+          `Recommendation ${recommendation.id} requiresHypotheses unknown: ${requirement.hypothesisId}`,
+        )
+      }
+    }
+  }
+
+  const qualitiesByRecommendation = new Map<string, Set<string>>()
+  for (const epilogue of content.epilogues) {
+    if (!recommendationIds.has(epilogue.recommendationId)) {
+      errors.push(`Epilogue ${epilogue.id} recommendationId unknown: ${epilogue.recommendationId}`)
+    }
+    const qualities = qualitiesByRecommendation.get(epilogue.recommendationId) ?? new Set<string>()
+    qualities.add(epilogue.quality)
+    qualitiesByRecommendation.set(epilogue.recommendationId, qualities)
+  }
+  for (const recommendation of content.recommendations) {
+    for (const quality of ['precise', 'imprecise', 'incorrect']) {
+      if (!(qualitiesByRecommendation.get(recommendation.id)?.has(quality) ?? false)) {
+        errors.push(`Recommendation ${recommendation.id} missing ${quality} epilogue`)
+      }
+    }
+  }
+
+  return errors
+}
+
 export class InvestigationContentError extends Error {
   readonly errors: string[]
 
@@ -320,6 +472,16 @@ export const assertValidInvestigationContent = (
   content: InvestigationContent,
 ): void => {
   const errors = validateInvestigationContent(content)
+  if (errors.length > 0) {
+    throw new InvestigationContentError(errors)
+  }
+}
+
+export const validateCaseV2Content = (content: CaseV2): string[] =>
+  validateCaseV2(content)
+
+export const assertValidCaseV2Content = (content: CaseV2): void => {
+  const errors = validateCaseV2Content(content)
   if (errors.length > 0) {
     throw new InvestigationContentError(errors)
   }
