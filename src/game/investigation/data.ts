@@ -14,6 +14,15 @@ import familyPatterns from '../cases/family-retreat-center/patterns.json'
 import familyReport from '../cases/family-retreat-center/report.json'
 import familyDebrief from '../cases/family-retreat-center/debrief.json'
 
+import case01Manifest from '../cases/case-01-proryv/case.json'
+import case01Hypotheses from '../cases/case-01-proryv/hypotheses.json'
+import case01Documents from '../cases/case-01-proryv/documents.json'
+import case01Contacts from '../cases/case-01-proryv/contacts.json'
+import case01Interviews from '../cases/case-01-proryv/interviews.json'
+import case01Actions from '../cases/case-01-proryv/actions.json'
+import case01Recommendations from '../cases/case-01-proryv/recommendations.json'
+import case01Epilogues from '../cases/case-01-proryv/epilogues.json'
+
 import type {
   CasePerson,
   CaseSource,
@@ -23,10 +32,20 @@ import type {
   InvestigationCase,
   InvestigationContent,
   ReportContent,
+  CaseV2,
+  CaseV2Manifest,
+  Hypothesis,
+  CaseDocument,
+  Contact,
+  Interview,
+  CaseAction,
+  Recommendation,
+  Epilogue,
 } from './types'
 import {
   assertValidInvestigationContent,
   InvestigationContentError,
+  validateCaseV2Content,
   validateInvestigationContent,
 } from './contentSchema'
 
@@ -61,6 +80,19 @@ export const investigationContents: ReadonlyArray<InvestigationContent> = [
   familyRetreatCenterInvestigation,
 ]
 
+export const caseProryvV2: CaseV2 = {
+  ...(case01Manifest as CaseV2Manifest),
+  hypotheses: case01Hypotheses as Hypothesis[],
+  documents: case01Documents as CaseDocument[],
+  contacts: case01Contacts as Contact[],
+  interviews: case01Interviews as Interview[],
+  actions: case01Actions as CaseAction[],
+  recommendations: case01Recommendations as Recommendation[],
+  epilogues: case01Epilogues as Epilogue[],
+}
+
+export const v2Cases: ReadonlyArray<CaseV2> = [caseProryvV2]
+
 // Validate every bundled case on import: log loudly so a bad JSON edit shows
 // up in the dev console immediately, but don't throw so the rest of the app
 // (including the legacy scenario prototype) keeps loading. Callers that want
@@ -70,6 +102,16 @@ for (const content of investigationContents) {
   if (importErrors.length > 0) {
     console.error(
       `Investigation content validation failed for case "${content.case.id}":\n- ` +
+        importErrors.join('\n- '),
+    )
+  }
+}
+
+for (const content of v2Cases) {
+  const importErrors = validateCaseV2Content(content)
+  if (importErrors.length > 0) {
+    console.error(
+      `Investigation v2 content validation failed for case "${content.id}":\n- ` +
         importErrors.join('\n- '),
     )
   }

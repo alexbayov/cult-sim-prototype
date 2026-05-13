@@ -1,13 +1,14 @@
-import { useEffect, useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import DossierApp from './investigation/DossierApp'
-import CaseSelectScreen from './investigation/CaseSelectScreen'
+import CaseSelectScreenV2 from './investigation-v2/CaseSelectScreenV2'
+import type { CaseListItem } from './investigation-v2/v2Picker'
 import OnboardingGuide from './investigation/OnboardingGuide'
-import { investigationContents } from './game/investigation/data'
-import type { InvestigationContent } from './game/investigation/types'
+import { investigationContents, v2Cases } from './game/investigation/data'
 import seasonManifest from './game/seasons/season-01.json'
 import { initYandex } from './platform/yandex'
 
 const GUIDE_SEEN_KEY = 'dossier-onboarding-seen-v1'
+const WorkspaceApp = lazy(() => import('./investigation-v2/WorkspaceApp'))
 
 function readGuideSeen(): boolean {
   if (typeof window === 'undefined') return true
@@ -25,10 +26,10 @@ function readGuideSeen(): boolean {
 // build during content iteration.
 function orderCasesBySeason(
   caseIds: ReadonlyArray<string>,
-  cases: ReadonlyArray<InvestigationContent>,
-): ReadonlyArray<InvestigationContent> {
-  const byId = new Map(cases.map((c) => [c.case.id, c]))
-  const ordered: InvestigationContent[] = []
+  cases: ReadonlyArray<CaseListItem>,
+): ReadonlyArray<CaseListItem> {
+  const byId = new Map(cases.map((c) => [c.id, c]))
+  const ordered: CaseListItem[] = []
   const seen = new Set<string>()
   for (const id of caseIds) {
     const content = byId.get(id)
@@ -37,16 +38,15 @@ function orderCasesBySeason(
     seen.add(id)
   }
   for (const content of cases) {
-    if (seen.has(content.case.id)) continue
+    if (seen.has(content.id)) continue
     ordered.push(content)
-    seen.add(content.case.id)
+    seen.add(content.id)
   }
   return ordered
 }
 
 function App() {
-  const [activeContent, setActiveContent] =
-    useState<InvestigationContent | null>(null)
+  const [activeContent, setActiveContent] = useState<CaseListItem | null>(null)
   // First-run: open the guide automatically the first time the start screen
   // is shown. Subsequent loads remember the dismissal in localStorage so the
   // overlay doesn't get in the way. The "как это работает" link on the start
@@ -54,7 +54,19 @@ function App() {
   const [guideOpen, setGuideOpen] = useState<boolean>(() => !readGuideSeen())
 
   const seasonOrderedCases = useMemo(
-    () => orderCasesBySeason(seasonManifest.caseIds, investigationContents),
+    () =>
+      orderCasesBySeason(seasonManifest.caseIds, [
+        ...investigationContents.map((content) => ({
+          kind: 'v1' as const,
+          id: content.case.id,
+          content,
+        })),
+        ...v2Cases.map((content) => ({
+          kind: 'v2' as const,
+          id: content.id,
+          content,
+        })),
+      ]),
     [],
   )
   const season = useMemo(
@@ -72,7 +84,7 @@ function App() {
     initYandex()
   }, [])
 
-  const handleSelect = (content: InvestigationContent) => {
+  const handleSelect = (content: CaseListItem) => {
     setActiveContent(content)
   }
 
@@ -96,9 +108,15 @@ function App() {
   return (
     <>
       {activeContent ? (
-        <DossierApp content={activeContent} onBackToCases={handleBack} />
+        activeContent.kind === 'v2' ? (
+          <Suspense fallback={<div className="workspace-loading">Загрузка дела…</div>}>
+            <WorkspaceApp content={activeContent.content} onBackToCases={handleBack} />
+          </Suspense>
+        ) : (
+          <DossierApp content={activeContent.content} onBackToCases={handleBack} />
+        )
       ) : (
-        <CaseSelectScreen
+        <CaseSelectScreenV2
           cases={seasonOrderedCases}
           season={season}
           onSelect={handleSelect}
