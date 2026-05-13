@@ -1,0 +1,895 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Workspace · 4-zone layout mockup</title>
+  <style>
+    :root {
+      --bg: #fafaf7;
+      --surface: #ffffff;
+      --surface-2: #f4f3ee;
+      --line: #e3e1d8;
+      --line-strong: #c9c5b6;
+      --text: #222222;
+      --text-muted: #6f6f6f;
+      --accent: #5b5b58;
+      --highlight: #fff3a8;
+      --hover: rgba(255, 243, 168, 0.45);
+      --available: #2d9d6e;
+      --known: #d99c2b;
+      --unknown: #9aa0a6;
+      --danger: #b04646;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      --radius: 5px;
+      --pad: 16px;
+      --font: -apple-system, "SF Pro Text", "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 16px; line-height: 1.55; }
+    body { min-height: 100vh; -webkit-font-smoothing: antialiased; }
+    a { color: inherit; }
+
+    /* ---------- View toggle ---------- */
+    .view-toggle {
+      position: fixed;
+      right: 12px;
+      top: 12px;
+      z-index: 50;
+      background: var(--surface);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      padding: 4px;
+      display: flex;
+      gap: 2px;
+      box-shadow: var(--shadow);
+      font-size: 12px;
+    }
+    .view-toggle button {
+      background: transparent;
+      border: 0;
+      padding: 6px 10px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-family: var(--font);
+      color: var(--text-muted);
+    }
+    .view-toggle button.active {
+      background: var(--surface-2);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    /* ---------- Top bar ---------- */
+    .topbar {
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+    }
+    .topbar h1 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      color: var(--text);
+    }
+    .topbar .crumbs {
+      color: var(--text-muted);
+      font-size: 12px;
+    }
+    .topbar .crumbs strong { color: var(--text); font-weight: 600; }
+
+    /* ---------- Layout shell ---------- */
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) 280px;
+      gap: 16px;
+      padding: 16px 20px 80px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* ---------- Documents zone ---------- */
+    .documents {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      min-height: calc(100vh - 120px);
+    }
+    .doc-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface-2);
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+    .doc-tab {
+      padding: 9px 12px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      border-right: 1px solid var(--line);
+      cursor: pointer;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 44px;
+    }
+    .doc-tab.active {
+      background: var(--surface);
+      color: var(--text);
+      font-weight: 600;
+      border-bottom: 2px solid var(--accent);
+      margin-bottom: -1px;
+    }
+    .doc-tab.locked {
+      color: var(--unknown);
+      background: repeating-linear-gradient(45deg, var(--surface-2) 0 6px, transparent 6px 12px);
+    }
+    .doc-tab .lock { font-size: 11px; opacity: 0.7; }
+    .doc-tab .badge {
+      background: var(--unknown);
+      color: white;
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 8px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .doc-meta {
+      padding: 10px 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .doc-meta strong { color: var(--text); font-weight: 600; }
+    .doc-body {
+      padding: 18px 24px 24px;
+      overflow-y: auto;
+      flex: 1;
+      font-size: 16px;
+      line-height: 1.6;
+      max-width: 760px;
+    }
+    .chat-day {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-align: center;
+      margin: 18px 0 12px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .msg {
+      margin: 0 0 10px;
+      padding: 10px 14px;
+      border-radius: 12px;
+      max-width: 85%;
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+      position: relative;
+    }
+    .msg.them {
+      background: var(--surface-2);
+      margin-right: auto;
+      border-bottom-left-radius: 4px;
+    }
+    .msg.me {
+      background: #eef3ee;
+      margin-left: auto;
+      border-bottom-right-radius: 4px;
+      border-color: #d9e3da;
+    }
+    .msg .author {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      letter-spacing: 0.02em;
+    }
+    .msg .time {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-left: 6px;
+      font-weight: 400;
+      letter-spacing: 0;
+    }
+    .msg p { margin: 0; }
+    .msg p + p { margin-top: 6px; }
+    mark {
+      background: var(--highlight);
+      padding: 0 2px;
+      border-radius: 2px;
+      box-shadow: inset 0 -1px 0 rgba(190, 150, 0, 0.25);
+    }
+    .hover-select {
+      border-bottom: 1px dotted var(--accent);
+      background: rgba(255, 243, 168, 0.18);
+      padding: 0 1px;
+    }
+    .doc-hint {
+      padding: 10px 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--surface-2);
+      border-top: 1px solid var(--line);
+      text-align: center;
+    }
+
+    /* ---------- Notebook zone ---------- */
+    .notebook {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 16px;
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+    }
+    .zone-h {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin: 0 0 12px;
+    }
+    .slot {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 12px;
+      background: var(--surface);
+    }
+    .slot.empty {
+      border-style: dashed;
+      border-color: var(--line-strong);
+      background: var(--surface-2);
+      color: var(--text-muted);
+      font-size: 14px;
+      text-align: center;
+      padding: 22px 12px;
+    }
+    .slot-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .slot-title { font-weight: 600; font-size: 14px; color: var(--text); }
+    .slot-count {
+      font-size: 11px;
+      color: var(--text-muted);
+      background: var(--surface-2);
+      padding: 2px 8px;
+      border-radius: 10px;
+      white-space: nowrap;
+    }
+    .phrase {
+      display: flex;
+      gap: 6px;
+      align-items: flex-start;
+      padding: 6px 8px;
+      margin: 4px 0;
+      background: var(--highlight);
+      border-radius: 4px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    .phrase .src {
+      display: block;
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      letter-spacing: 0.02em;
+    }
+    .phrase .x {
+      margin-left: auto;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0 4px;
+      border-radius: 2px;
+      min-width: 18px;
+      text-align: center;
+    }
+    .phrase .x:hover { background: rgba(0,0,0,0.06); }
+    .submit-wrap { margin-top: auto; padding-top: 12px; }
+    .submit {
+      width: 100%;
+      padding: 14px 12px;
+      background: var(--surface-2);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: not-allowed;
+      letter-spacing: 0.01em;
+    }
+    .submit-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+      text-align: center;
+      font-style: italic;
+    }
+
+    /* ---------- Right rail (contacts + actions) ---------- */
+    .rail {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: sticky;
+      top: 16px;
+      align-self: flex-start;
+    }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+    .contact {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .contact:last-child { border-bottom: 0; }
+    .contact .dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      margin-top: 5px;
+      flex-shrink: 0;
+    }
+    .contact .dot.available { background: var(--available); }
+    .contact .dot.known     { background: var(--known); }
+    .contact .dot.unknown   { background: var(--unknown); }
+    .contact-body { flex: 1; min-width: 0; }
+    .contact-name { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
+    .contact-state {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    /* Action budget meter */
+    .meter {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 4px 0 12px;
+    }
+    .meter-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+    .meter-dots { display: flex; gap: 4px; }
+    .dot-pip {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 1px solid var(--line-strong);
+      background: var(--surface);
+    }
+    .dot-pip.spent {
+      background: var(--surface-2);
+      border-color: var(--line);
+      opacity: 0.6;
+    }
+    .dot-pip.remaining {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .action {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      padding: 10px 12px;
+      margin: 6px 0;
+      background: var(--surface);
+      border: 1px solid var(--line-strong);
+      border-radius: var(--radius);
+      cursor: pointer;
+      min-height: 44px;
+    }
+    .action:hover:not(.disabled) { background: var(--surface-2); }
+    .action.disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      background: var(--surface-2);
+      border-style: dashed;
+    }
+    .action-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .action-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .action-cost {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      letter-spacing: 0.02em;
+    }
+    .action-help {
+      font-size: 11px;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* ---------- Mobile (real viewport) ---------- */
+    @media (max-width: 768px) {
+      :root { --pad: 12px; }
+      .view-toggle {
+        top: auto;
+        bottom: 12px;
+        right: auto;
+        left: 12px;
+        font-size: 11px;
+        z-index: 60;
+      }
+      .view-toggle button { padding: 4px 8px; }
+      .topbar { padding: 8px 14px; gap: 8px; flex-wrap: wrap; }
+      .topbar h1 { font-size: 13px; }
+      .topbar .crumbs { font-size: 11px; line-height: 1.3; }
+      .workspace {
+        grid-template-columns: 1fr;
+        gap: 0;
+        padding: 0 0 340px;
+      }
+      .documents {
+        border-radius: 0;
+        border-left: 0;
+        border-right: 0;
+        min-height: calc(100vh - 340px);
+      }
+      .doc-tab { padding: 9px 12px; font-size: 12px; }
+      .doc-body { padding: 14px 16px 20px; font-size: 16px; max-width: none; }
+      .doc-meta { padding: 8px 16px; font-size: 11px; gap: 12px; }
+      .notebook, .rail { display: none; }
+
+      /* Bottom sheet */
+      .sheet { display: flex; }
+    }
+    @media (min-width: 769px) {
+      .sheet { display: none; }
+    }
+
+    /* ---------- Bottom sheet (mobile) ---------- */
+    .sheet {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      background: var(--surface);
+      border-top: 1px solid var(--line-strong);
+      box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.06);
+      max-height: 60vh;
+      display: none;
+      flex-direction: column;
+      z-index: 30;
+    }
+    .sheet-handle {
+      width: 36px; height: 4px;
+      background: var(--line-strong);
+      border-radius: 2px;
+      margin: 8px auto 4px;
+    }
+    .sheet-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--line);
+    }
+    .sheet-tab {
+      flex: 1;
+      padding: 12px 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-align: center;
+      cursor: pointer;
+      min-height: 44px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      border-bottom: 2px solid transparent;
+    }
+    .sheet-tab.active {
+      color: var(--text);
+      border-bottom-color: var(--accent);
+    }
+    .sheet-tab .sub {
+      font-size: 10px;
+      font-weight: 400;
+      color: var(--text-muted);
+      letter-spacing: 0.02em;
+    }
+    .sheet-content {
+      overflow-y: auto;
+      padding: 14px 16px;
+      flex: 1;
+    }
+
+    /* ---------- Forced views via .view-desktop / .view-mobile classes ---------- */
+    html.view-desktop .sheet { display: none !important; }
+    html.view-desktop .view-toggle { top: 12px; bottom: auto; right: 12px; font-size: 12px; }
+    html.view-desktop .view-toggle button { padding: 6px 10px; }
+    html.view-desktop .topbar { padding: 10px 20px; gap: 16px; flex-wrap: nowrap; }
+    html.view-desktop .topbar h1 { font-size: 14px; }
+    html.view-desktop .topbar .crumbs { font-size: 12px; }
+    html.view-desktop .workspace {
+      grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) 280px !important;
+      gap: 16px !important;
+      padding: 16px 20px 80px !important;
+    }
+    html.view-desktop .notebook,
+    html.view-desktop .rail { display: flex !important; }
+    html.view-desktop .documents {
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      min-height: calc(100vh - 120px);
+    }
+    html.view-desktop .doc-body { padding: 18px 24px 24px; max-width: 760px; }
+    html.view-desktop .doc-tab { padding: 10px 14px; font-size: 13px; }
+
+    html.view-mobile .view-toggle { top: auto; bottom: 12px; right: auto; left: 12px; font-size: 11px; z-index: 60; }
+    html.view-mobile .view-toggle button { padding: 4px 8px; }
+    html.view-mobile .topbar { padding: 8px 14px !important; gap: 8px !important; flex-wrap: wrap; }
+    html.view-mobile .topbar h1 { font-size: 13px; }
+    html.view-mobile .topbar .crumbs { font-size: 11px; line-height: 1.3; }
+    html.view-mobile .workspace {
+      grid-template-columns: 1fr !important;
+      gap: 0 !important;
+      padding: 0 0 340px !important;
+    }
+    html.view-mobile .documents {
+      border-radius: 0 !important;
+      border-left: 0 !important;
+      border-right: 0 !important;
+      min-height: calc(100vh - 340px);
+    }
+    html.view-mobile .doc-tab { padding: 9px 12px !important; font-size: 12px !important; }
+    html.view-mobile .doc-body { padding: 14px 16px 20px !important; max-width: none !important; }
+    html.view-mobile .notebook,
+    html.view-mobile .rail { display: none !important; }
+    html.view-mobile .sheet { display: flex !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Tiny forced-view toggle. Only JS in this file. Persisted to localStorage. -->
+  <div class="view-toggle" role="group" aria-label="Принудительный вид">
+    <button type="button" data-view="auto">Авто</button>
+    <button type="button" data-view="desktop">Desktop</button>
+    <button type="button" data-view="mobile">Mobile</button>
+  </div>
+
+  <header class="topbar">
+    <h1>Мастерская</h1>
+    <span class="crumbs">кейс <strong>[заглушка-01]</strong> · клиент: <strong>[заглушка] Мать</strong> · подопечный: <strong>[заглушка] Сын</strong></span>
+  </header>
+
+  <main class="workspace">
+
+    <!-- =================== Documents zone =================== -->
+    <section class="documents" aria-label="Документы">
+      <div class="doc-tabs" role="tablist">
+        <div class="doc-tab active" role="tab" aria-selected="true">переписка матери с сыном <span class="badge" title="новое">12</span></div>
+        <div class="doc-tab" role="tab">групповой чат</div>
+        <div class="doc-tab locked" role="tab" aria-disabled="true" title="заблокирован — действие требуется"><span class="lock">🔒</span> расшифровка интервью</div>
+        <div class="doc-tab" role="tab">пост в соцсети</div>
+        <div class="doc-tab" role="tab">статья СМИ</div>
+        <div class="doc-tab locked" role="tab" aria-disabled="true" title="заблокирован — действие требуется"><span class="lock">🔒</span> копия договора</div>
+      </div>
+
+      <div class="doc-meta">
+        <span>тип: <strong>чат</strong></span>
+        <span>источник: <strong>[заглушка] мессенджер заявителя</strong></span>
+        <span>период: <strong>последние 3 месяца</strong></span>
+        <span>сообщений: <strong>42</strong></span>
+      </div>
+
+      <div class="doc-body">
+
+        <div class="chat-day">12 марта</div>
+
+        <div class="msg them">
+          <div class="author">[заглушка] Мать <span class="time">19:14</span></div>
+          <p>Привет. Как у тебя дела? Давно не звонил. Я волнуюсь, я понимаю, что ты занят, но мне правда важно слышать твой голос хотя бы по пятницам.</p>
+        </div>
+
+        <div class="msg me">
+          <div class="author">[заглушка] Сын <span class="time">22:48</span></div>
+          <p>Привет, мам. Всё нормально, не переживай. Просто <mark>сейчас идёт большая программа, и мне важно не выпадать из ритма команды</mark>. Это мой выбор и моя ответственность. Я звонил бы, если бы было что сказать.</p>
+        </div>
+
+        <div class="msg them">
+          <div class="author">[заглушка] Мать <span class="time">22:55</span></div>
+          <p>Сынок, ты ел сегодня? Я могу приехать в выходные, мы давно не виделись. Папа тоже спрашивает.</p>
+        </div>
+
+        <div class="msg me">
+          <div class="author">[заглушка] Сын <span class="time">23:31</span></div>
+          <p>В выходные не получится. У нас закрытая часть курса. <span class="hover-select">Куратор просит не отвлекаться на бытовые темы первые три месяца</span> — это часть метода. Если у тебя что-то срочное, напиши, я постараюсь ответить вечером.</p>
+        </div>
+
+        <div class="chat-day">21 марта</div>
+
+        <div class="msg them">
+          <div class="author">[заглушка] Мать <span class="time">11:02</span></div>
+          <p>Я перевела тебе на карту, как договаривались. Это последний раз в этом месяце — у нас с папой тоже сейчас не очень с деньгами. Может быть, ты сходишь к доктору, как мы говорили? Я записала тебя, тебе только подтвердить.</p>
+        </div>
+
+        <div class="msg me">
+          <div class="author">[заглушка] Сын <span class="time">14:09</span></div>
+          <p>Спасибо. К врачу не пойду. У нас в программе есть свой специалист, он лучше понимает, как со мной работать. Поликлиника — это пустая трата времени и денег.</p>
+          <p><mark>Если тебе действительно важно мне помочь, лучше внеси этот платёж в следующем месяце заранее</mark> — это снимет с меня лишнее напряжение, я смогу сосредоточиться.</p>
+        </div>
+
+        <div class="msg them">
+          <div class="author">[заглушка] Мать <span class="time">14:15</span></div>
+          <p>Хорошо. А что за специалист, ты не говорил раньше. Как его зовут?</p>
+        </div>
+
+        <div class="msg me">
+          <div class="author">[заглушка] Сын <span class="time">14:30</span></div>
+          <p>Мам, давай без допроса. Имя тебе ничего не скажет. Ты бы лучше посмотрела на тех ребят, с которыми я раньше работал — никто из них не интересовался моим состоянием. А здесь меня слышат.</p>
+        </div>
+
+        <div class="chat-day">4 апреля</div>
+
+        <div class="msg them">
+          <div class="author">[заглушка] Мать <span class="time">08:41</span></div>
+          <p>Сынок, мне сегодня позвонила [заглушка] твоя бывшая коллега. Сказала, что ты пропал ещё в феврале и не ответил даже на новогоднюю открытку. Я не знала, что писать. Она волнуется. Может, напишешь ей хотя бы коротко?</p>
+        </div>
+
+        <div class="msg me">
+          <div class="author">[заглушка] Сын <span class="time">19:55</span></div>
+          <p>Не надо обсуждать меня с ней и вообще ни с кем из «той жизни». Это закрытая тема, мам. Я тебе уже объяснял. Если ты будешь и дальше делиться моими делами наружу, мне придётся какое-то время не выходить на связь — мне это мешает.</p>
+        </div>
+
+        <div class="msg them">
+          <div class="author">[заглушка] Мать <span class="time">20:02</span></div>
+          <p>Я не «делилась». Она сама позвонила.</p>
+        </div>
+
+        <div class="msg me">
+          <div class="author">[заглушка] Сын <span class="time">20:05</span></div>
+          <p>Хорошо. Тогда, пожалуйста, в следующий раз просто не отвечай. Это будет твоим вкладом в то, что я сейчас делаю. И ещё: на этой неделе понадобится докинуть. Я скажу сумму позже.</p>
+        </div>
+
+      </div>
+
+      <div class="doc-hint">выделите фрагмент и перетащите в блокнот · или удерживайте, чтобы добавить в гипотезу</div>
+    </section>
+
+    <!-- =================== Notebook zone =================== -->
+    <aside class="notebook" aria-label="Рабочий блокнот">
+      <h2 class="zone-h">Рабочий блокнот</h2>
+
+      <div class="slot">
+        <div class="slot-head">
+          <span class="slot-title">версия A</span>
+          <span class="slot-count">3 фрагмента</span>
+        </div>
+        <div class="phrase">
+          «сейчас идёт большая программа, и мне важно не выпадать из ритма команды»
+          <span class="x" title="убрать">✕</span>
+        </div>
+        <div class="phrase">
+          «куратор просит не отвлекаться на бытовые темы первые три месяца»
+          <span class="x" title="убрать">✕</span>
+        </div>
+        <div class="phrase">
+          «не надо обсуждать меня ни с кем из той жизни — это закрытая тема»
+          <span class="x" title="убрать">✕</span>
+        </div>
+      </div>
+
+      <div class="slot">
+        <div class="slot-head">
+          <span class="slot-title">версия B</span>
+          <span class="slot-count">2 фрагмента</span>
+        </div>
+        <div class="phrase">
+          «если тебе действительно важно мне помочь, лучше внеси этот платёж в следующем месяце заранее»
+          <span class="x" title="убрать">✕</span>
+        </div>
+        <div class="phrase">
+          «на этой неделе понадобится докинуть; я скажу сумму позже»
+          <span class="x" title="убрать">✕</span>
+        </div>
+      </div>
+
+      <div class="slot empty" role="region" aria-label="Пустая гипотеза">
+        <div class="slot-head" style="justify-content:center;">
+          <span class="slot-title">версия C</span>
+        </div>
+        положите фрагмент сюда
+      </div>
+
+      <div class="submit-wrap">
+        <button class="submit" type="button" disabled>Передать рекомендацию семье</button>
+        <div class="submit-hint">[заглушка] нужно ≥2 фрагмента в каждой версии</div>
+      </div>
+    </aside>
+
+    <!-- =================== Right rail: contacts + actions =================== -->
+    <aside class="rail" aria-label="Контакты и действия">
+
+      <section class="panel" aria-label="Контакты">
+        <h2 class="zone-h">Контакты</h2>
+
+        <div class="contact">
+          <span class="dot available" aria-hidden="true"></span>
+          <div class="contact-body">
+            <div class="contact-name">[заглушка] контакт-1 — родственник</div>
+            <div class="contact-state">доступен для звонка</div>
+          </div>
+        </div>
+
+        <div class="contact">
+          <span class="dot known" aria-hidden="true"></span>
+          <div class="contact-body">
+            <div class="contact-name">[заглушка] контакт-2 — журналист</div>
+            <div class="contact-state">нужно показать: фрагмент про X</div>
+          </div>
+        </div>
+
+        <div class="contact">
+          <span class="dot unknown" aria-hidden="true"></span>
+          <div class="contact-body">
+            <div class="contact-name">[заглушка] контакт-3 — бывший участник</div>
+            <div class="contact-state">??? — соберите больше материала</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" aria-label="Действия">
+        <h2 class="zone-h">Действия</h2>
+
+        <div class="meter" aria-label="Бюджет действий">
+          <span class="meter-label">бюджет</span>
+          <div class="meter-dots" role="img" aria-label="2 потрачено, 4 осталось">
+            <span class="dot-pip spent"></span>
+            <span class="dot-pip spent"></span>
+            <span class="dot-pip remaining"></span>
+            <span class="dot-pip remaining"></span>
+            <span class="dot-pip remaining"></span>
+            <span class="dot-pip remaining"></span>
+          </div>
+        </div>
+
+        <div class="action" tabindex="0">
+          <div class="action-row">
+            <span class="action-name">Прочесать архив СМИ</span>
+            <span class="action-cost">−2</span>
+          </div>
+          <div class="action-help">[заглушка] поиск по ключевому слову; +1–2 газетных вырезки</div>
+        </div>
+
+        <div class="action" tabindex="0">
+          <div class="action-row">
+            <span class="action-name">Запросить документы у клиента</span>
+            <span class="action-cost">−1</span>
+          </div>
+          <div class="action-help">[заглушка] переписка, копии договоров — то, что есть у заявителя на руках</div>
+        </div>
+
+        <div class="action disabled" tabindex="0" aria-disabled="true">
+          <div class="action-row">
+            <span class="action-name">Запросить интервью</span>
+            <span class="action-cost">−1</span>
+          </div>
+          <div class="action-help">[заглушка] бюджет исчерпан — оставлено для финального шага</div>
+        </div>
+      </section>
+
+    </aside>
+  </main>
+
+  <!-- =================== Mobile bottom sheet =================== -->
+  <div class="sheet" aria-label="Блокнот, контакты и действия">
+    <div class="sheet-handle" aria-hidden="true"></div>
+    <div class="sheet-tabs" role="tablist">
+      <div class="sheet-tab active" role="tab" aria-selected="true">
+        блокнот <span class="sub">2 версии · 5 фрагментов</span>
+      </div>
+      <div class="sheet-tab" role="tab">
+        контакты <span class="sub">1 доступен</span>
+      </div>
+      <div class="sheet-tab" role="tab">
+        действия <span class="sub">бюджет 4 / 6</span>
+      </div>
+    </div>
+    <div class="sheet-content">
+
+      <!-- mobile notebook -->
+      <div class="slot">
+        <div class="slot-head">
+          <span class="slot-title">версия A</span>
+          <span class="slot-count">3 фрагмента</span>
+        </div>
+        <div class="phrase">
+          «сейчас идёт большая программа, и мне важно не выпадать из ритма команды»
+          <span class="x">✕</span>
+        </div>
+        <div class="phrase">
+          «куратор просит не отвлекаться на бытовые темы первые три месяца»
+          <span class="x">✕</span>
+        </div>
+        <div class="phrase">
+          «не надо обсуждать меня ни с кем из той жизни — это закрытая тема»
+          <span class="x">✕</span>
+        </div>
+      </div>
+
+      <div class="slot">
+        <div class="slot-head">
+          <span class="slot-title">версия B</span>
+          <span class="slot-count">2 фрагмента</span>
+        </div>
+        <div class="phrase">
+          «если тебе действительно важно мне помочь, лучше внеси этот платёж в следующем месяце заранее»
+          <span class="x">✕</span>
+        </div>
+        <div class="phrase">
+          «на этой неделе понадобится докинуть; я скажу сумму позже»
+          <span class="x">✕</span>
+        </div>
+      </div>
+
+      <div class="slot empty">
+        <div class="slot-head" style="justify-content:center;">
+          <span class="slot-title">версия C</span>
+        </div>
+        положите фрагмент сюда
+      </div>
+
+      <div class="submit-wrap">
+        <button class="submit" type="button" disabled>Передать рекомендацию семье</button>
+        <div class="submit-hint">[заглушка] нужно ≥2 фрагмента в каждой версии</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // <10 lines, the only allowed JS: forced view toggle (desktop/mobile/auto).
+    (function () {
+      var saved = localStorage.getItem('zeta:view') || 'auto';
+      apply(saved);
+      document.querySelectorAll('.view-toggle button').forEach(function (b) {
+        b.addEventListener('click', function () { apply(b.dataset.view); localStorage.setItem('zeta:view', b.dataset.view); });
+      });
+      function apply(v) {
+        document.documentElement.classList.remove('view-desktop', 'view-mobile');
+        if (v === 'desktop' || v === 'mobile') document.documentElement.classList.add('view-' + v);
+        document.querySelectorAll('.view-toggle button').forEach(function (b) { b.classList.toggle('active', b.dataset.view === v); });
+      }
+    })();
+  </script>
+
+</body>
+</html>
