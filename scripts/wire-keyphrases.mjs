@@ -353,10 +353,76 @@ function parseDocument(rawText) {
 // Main
 // ---------------------------------------------------------------------------
 
+// Self-check: every emitted keyPhrase range must resolve, in UTF-16
+// coordinates (JS `.length` / `.slice`), to a substring that also occurs as
+// a `**bold span**` in the original markdown source. This catches:
+//   - codepoint vs UTF-16 indexing slips (1 emoji = 1 codepoint but
+//     2 UTF-16 code units; surrogate pairs throw off naive iteration);
+//   - bold-marker stripping bugs that leave `**` inside body or shift
+//     ranges by an odd number of code units;
+//   - range translation bugs through preToPost normalisation.
+//
+// On any mismatch the script prints a diff and exits non-zero rather than
+// emitting bad data into the JSON bundle.
+function selfCheckRanges(docId, body, keyPhrases, rawMd) {
+  // Collect every `**...**` span in the raw markdown, stripping inline
+  // blockquote prefixes and inline `<!-- ... -->` comments. Whitespace is
+  // normalised for comparison so the source's line-wrap doesn't matter.
+  const sourceSpans = []
+  const re = /\*\*([\s\S]+?)\*\*/g
+  let m
+  while ((m = re.exec(rawMd)) !== null) {
+    let t = m[1]
+      // Drop inline comments that landed inside a bold span (none today, but defensive).
+      .replace(/<!--[\s\S]*?-->/g, '')
+      // Strip continuation `> ` prefixes when the bold span spans lines.
+      .replace(/\n>\s?/g, '\n')
+      .replace(/^>\s?/, '')
+    sourceSpans.push(t.replace(/\s+/g, ' ').trim())
+  }
+  const sourceSet = new Set(sourceSpans)
+
+  const mismatches = []
+  for (let i = 0; i < keyPhrases.length; i++) {
+    const kp = keyPhrases[i]
+    const [s, e] = kp.range
+    if (
+      !Number.isInteger(s) ||
+      !Number.isInteger(e) ||
+      s < 0 ||
+      e <= s ||
+      e > body.length
+    ) {
+      mismatches.push(`KP[${i}] range [${s}, ${e}) out of bounds (body.length=${body.length})`)
+      continue
+    }
+    const slice = body.slice(s, e).replace(/\s+/g, ' ').trim()
+    if (!sourceSet.has(slice)) {
+      // Provide a hint: is the off-by-N caused by surrogate pairs?
+      let high = 0
+      for (let j = 0; j < s; j++) {
+        const cc = body.charCodeAt(j)
+        if (cc >= 0xd800 && cc <= 0xdbff) high++
+      }
+      mismatches.push(
+        `KP[${i}] range [${s}, ${e}) slice="${slice.slice(0, 60)}" not found among ${sourceSpans.length} **bold** spans (high surrogates in body[:s]=${high})`,
+      )
+    }
+  }
+
+  if (mismatches.length > 0) {
+    console.error(`\n[wire-keyphrases] SELF-CHECK FAILED for ${docId}:`)
+    for (const msg of mismatches) console.error(`  ${msg}`)
+    return false
+  }
+  return true
+}
+
 function main() {
   const documentsPath = join(caseDir, 'documents.json')
   const documents = JSON.parse(readFileSync(documentsPath, 'utf8'))
 
+  let allOk = true
   for (const { id, md } of DOC_MAPPING) {
     const rawText = readFileSync(join(draftsDir, md), 'utf8')
     const { title, source, body, keyPhrases } = parseDocument(rawText)
@@ -366,13 +432,25 @@ function main() {
       console.error(`No document with id ${id} in documents.json`)
       process.exit(1)
     }
+
+    const ok = selfCheckRanges(id, body, keyPhrases, rawText)
+    if (!ok) {
+      allOk = false
+      continue
+    }
+
     target.title = title || target.title
     target.source = source || target.source
     target.body = body
     target.keyPhrases = keyPhrases
     console.log(
-      `[${id}] body=${body.length} chars, ${keyPhrases.length} keyPhrases (${keyPhrases.reduce((s, kp) => s + kp.effects.length, 0)} effects)`,
+      `[${id}] body=${body.length} chars, ${keyPhrases.length} keyPhrases (${keyPhrases.reduce((s, kp) => s + kp.effects.length, 0)} effects) self-check=OK`,
     )
+  }
+
+  if (!allOk) {
+    console.error('\n[wire-keyphrases] aborting: self-check found range/text mismatches')
+    process.exit(1)
   }
 
   // Pretty-print with 2-space indent, trailing newline.
