@@ -24,9 +24,7 @@
     "role": "журналист регионального СМИ",
     "initialState": "gated",
     "gateRequirement": {
-      "requiredHypothesis": "h-financial",
-      "minWeight": "weak",
-      "minSupportingPhrases": 0
+      "requiredDocumentId": "doc-clipping-2018"
     },
     "interviewId": "int-anna"
   }

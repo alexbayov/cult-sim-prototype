@@ -410,15 +410,19 @@ function validateCaseV2(caseDir) {
           `${where}.range [${s}, ${e}) out of [0, ${d.body.length}) or non-positive width`,
         )
       }
-      if (!['strong', 'weak', 'counter'].includes(kp.weight)) {
-        errors.push(`${where}.weight must be strong|weak|counter`)
-      }
-      if (!Array.isArray(kp.worksOn) || kp.worksOn.length === 0) {
-        errors.push(`${where}.worksOn must be a non-empty array of hypothesis ids`)
+      if (!Array.isArray(kp.effects) || kp.effects.length === 0) {
+        errors.push(`${where}.effects must be a non-empty array of {hypothesisId, weight}`)
       } else {
-        for (const hid of kp.worksOn) {
-          if (!hypothesisIds.has(hid)) {
-            errors.push(`${where}.worksOn references unknown hypothesis: ${hid}`)
+        for (let j = 0; j < kp.effects.length; j++) {
+          const ef = kp.effects[j]
+          const ewhere = `${where}.effects[${j}]`
+          if (typeof ef.hypothesisId !== 'string' || !ef.hypothesisId) {
+            errors.push(`${ewhere}.hypothesisId must be a non-empty string`)
+          } else if (!hypothesisIds.has(ef.hypothesisId)) {
+            errors.push(`${ewhere}.hypothesisId references unknown hypothesis: ${ef.hypothesisId}`)
+          }
+          if (!['strong', 'weak', 'counter'].includes(ef.weight)) {
+            errors.push(`${ewhere}.weight must be strong|weak|counter`)
           }
         }
       }
@@ -450,6 +454,18 @@ function validateCaseV2(caseDir) {
         (!Number.isInteger(gate.minSupportingPhrases) || gate.minSupportingPhrases < 0)
       ) {
         errors.push(`Contact ${ct.id} gateRequirement.minSupportingPhrases must be a non-negative integer`)
+      }
+      if (gate.requiredDocumentId && !documentIds.has(gate.requiredDocumentId)) {
+        errors.push(
+          `Contact ${ct.id} gateRequirement.requiredDocumentId references unknown document: ${gate.requiredDocumentId}`,
+        )
+      }
+    }
+    if (ct.initialState === 'gated') {
+      if (!gate || (!gate.requiredHypothesis && !gate.requiredDocumentId)) {
+        errors.push(
+          `Contact ${ct.id} is gated but has no requiredHypothesis or requiredDocumentId`,
+        )
       }
     }
   }

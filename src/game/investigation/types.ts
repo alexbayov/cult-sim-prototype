@@ -200,13 +200,21 @@ export type DocumentType =
   | 'document'
   | 'personal'
 
+// A single (hypothesis, weight) pair contributed by a key phrase. A phrase
+// may carry several effects when β's source markdown stacks multiple
+// `<!-- works on: -->` comments on one bold span — e.g. one span that reads
+// both as h-mentor-dep strong and h-financial weak.
+export type KeyPhraseEffect = {
+  hypothesisId: string
+  weight: 'strong' | 'weak' | 'counter'
+}
+
 export type KeyPhrase = {
   // [start, end) into Document.body as UTF-16 code-unit indices. The validator
   // checks 0 <= start < end <= body.length.
   range: [number, number]
-  // Hypothesis ids this phrase supports or counters.
-  worksOn: string[]
-  weight: 'strong' | 'weak' | 'counter'
+  // Non-empty list of (hypothesis, weight) contributions.
+  effects: KeyPhraseEffect[]
 }
 
 // Named `CaseDocument` rather than `Document` to avoid shadowing the global
@@ -231,10 +239,16 @@ export type Hypothesis = {
   description: string
 }
 
+// A gate may be hypothesis-based (player must have N entries on a hypothesis
+// at weight >= minWeight), document-based (a specific Document must be in
+// the visible set — either defaultVisible or unlocked by an Action), or
+// both (logical AND). If `initialState === 'gated'` the validator requires
+// at least one of {requiredHypothesis, requiredDocumentId} to be set.
 export type ContactGateRequirement = {
   requiredHypothesis?: string
   minWeight?: 'weak' | 'strong'
   minSupportingPhrases?: number
+  requiredDocumentId?: string
 }
 
 export type Contact = {
