@@ -83,7 +83,14 @@ export const PATTERN_TERM = 'паттерн'
 /**
  * Test whether `text` contains `term`. Terms with a `.` are compiled as
  * case-insensitive Unicode regexes; everything else is a plain
- * substring match (case-insensitive).
+ * substring match.
+ *
+ * Casing rule: terms that are entirely uppercase letters (Cyrillic or
+ * Latin) — e.g. chip-style labels like `ДЕЛО`, `ДОСЬЕ` — are matched
+ * case-sensitively. This mirrors the draft-language scanner semantics:
+ * `дело` is normal Russian prose ("закрыли дело"), but `ДЕЛО` rendered
+ * in caps is detective-jargon styling. All other terms remain
+ * case-insensitive substring matches.
  *
  * Returns false for non-string text/term or empty inputs. An invalid
  * regex pattern silently returns false rather than throwing — callers
@@ -98,6 +105,10 @@ export function termMatches(text, term) {
     } catch {
       return false
     }
+  }
+  // ALL-CAPS terms are chip-style labels — match case-sensitively.
+  if (term === term.toUpperCase() && term !== term.toLowerCase()) {
+    return text.includes(term)
   }
   return text.toLowerCase().includes(term.toLowerCase())
 }

@@ -71,7 +71,7 @@ const interviewIds = new Set(bundle.interviews.map((i) => i.id))
 const actionIds = new Set(bundle.actions.map((a) => a.id))
 const recommendationIds = new Set(bundle.recommendations.map((r) => r.id))
 
-// keyPhrase.range bounds + worksOn references
+// keyPhrase.range bounds + effects references
 for (const d of bundle.documents) {
   for (let i = 0; i < (d.keyPhrases ?? []).length; i++) {
     const kp = d.keyPhrases[i]
@@ -84,8 +84,18 @@ for (const d of bundle.documents) {
     if (s < 0 || e > d.body.length || s >= e) {
       errors.push(`${where}.range out of [0, ${d.body.length}) or non-positive width`)
     }
-    for (const hid of kp.worksOn ?? []) {
-      if (!hypothesisIds.has(hid)) errors.push(`${where}.worksOn unknown hypothesis: ${hid}`)
+    if (!Array.isArray(kp.effects) || kp.effects.length === 0) {
+      errors.push(`${where}.effects must be a non-empty array`)
+      continue
+    }
+    for (let j = 0; j < kp.effects.length; j++) {
+      const ef = kp.effects[j]
+      if (!hypothesisIds.has(ef.hypothesisId)) {
+        errors.push(`${where}.effects[${j}].hypothesisId unknown: ${ef.hypothesisId}`)
+      }
+      if (!['strong', 'weak', 'counter'].includes(ef.weight)) {
+        errors.push(`${where}.effects[${j}].weight must be strong|weak|counter`)
+      }
     }
   }
   if (d.unlockedByAction && !actionIds.has(d.unlockedByAction)) {
@@ -101,6 +111,12 @@ for (const c of bundle.contacts) {
   const g = c.gateRequirement
   if (g?.requiredHypothesis && !hypothesisIds.has(g.requiredHypothesis)) {
     errors.push(`Contact ${c.id} gateRequirement.requiredHypothesis unknown: ${g.requiredHypothesis}`)
+  }
+  if (g?.requiredDocumentId && !documentIds.has(g.requiredDocumentId)) {
+    errors.push(`Contact ${c.id} gateRequirement.requiredDocumentId unknown: ${g.requiredDocumentId}`)
+  }
+  if (c.initialState === 'gated' && !(g?.requiredHypothesis || g?.requiredDocumentId)) {
+    errors.push(`Contact ${c.id} is gated but has no requiredHypothesis or requiredDocumentId`)
   }
 }
 for (const it of bundle.interviews) {
@@ -178,6 +194,30 @@ console.log(
 )
 console.log(`  visible-language warnings: ${languageWarnings.length}`)
 for (const w of languageWarnings) console.log(`   - ${w}`)
+
+// keyPhrase totals — per-hypothesis breakdown so it's obvious by eyeball
+// whether the wire-in step actually attached phrases to each hypothesis.
+const totals = { all: 0 }
+for (const h of bundle.hypotheses) {
+  totals[h.id] = { strong: 0, weak: 0, counter: 0 }
+}
+for (const d of bundle.documents) {
+  for (const kp of d.keyPhrases ?? []) {
+    totals.all++
+    for (const ef of kp.effects ?? []) {
+      const slot = totals[ef.hypothesisId]
+      if (slot && (ef.weight in slot)) slot[ef.weight]++
+    }
+  }
+}
+const formatSlot = (slot) => {
+  if (!slot) return '(no data)'
+  const counter = slot.counter
+  if (counter > 0) return `${slot.strong}s/${slot.weak}w/${counter}c`
+  return `${slot.strong}s/${slot.weak}w`
+}
+const lines = bundle.hypotheses.map((h) => `${h.id} (${formatSlot(totals[h.id])})`)
+console.log(`  keyPhrase totals: ${totals.all} total, ${lines.join(', ')}`)
 
 if (errors.length === 0) {
   console.log('\nOK: case-01-proryv v2 bundle is valid')

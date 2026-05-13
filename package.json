@@ -14,6 +14,7 @@
     "audit:balance": "node scripts/audit-investigation-balance.mjs",
     "audit:visible-language": "node scripts/audit-visible-language.mjs",
     "audit:drafts": "node scripts/audit-content-drafts.mjs",
+    "wire:keyphrases": "node scripts/wire-keyphrases.mjs",
     "build:yandex": "node scripts/build-yandex-iframe.mjs",
     "package:yandex": "npm run build:yandex && cd dist && zip -r ../yandex-iframe.zip ."
   },
