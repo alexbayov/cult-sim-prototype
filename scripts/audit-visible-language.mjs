@@ -20,14 +20,17 @@
 //   npm run audit:visible-language
 
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs'
-import { join, dirname } from 'node:path'
+import { join, dirname, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { scanInvestigationContent } from './lib/visible-language.mjs'
+import { scanDraftDirectories } from './lib/draft-language.mjs'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
-const casesRoot = join(__dirname, '..', 'src', 'game', 'cases')
+const repoRoot = join(__dirname, '..')
+const casesRoot = join(repoRoot, 'src', 'game', 'cases')
+const draftDirs = [join(repoRoot, 'docs', 'case-01-draft')]
 
 const caseDirs = readdirSync(casesRoot)
   .map((name) => join(casesRoot, name))
@@ -79,7 +82,28 @@ for (const caseDir of caseDirs) {
   }
 }
 
-console.log(`\nTotal: ${totalWarnings} visible-language warning${totalWarnings === 1 ? '' : 's'} across ${caseDirs.length} case${caseDirs.length === 1 ? '' : 's'}.`)
+// Narrative drafts under `docs/<case-id>-draft/` — Markdown prose that
+// will be wired into per-case JSON in a later PR. The deny-list and
+// scanner live in `scripts/lib/draft-language.mjs`.
+const { files: draftFiles, totalFindings: draftWarnings } =
+  scanDraftDirectories(draftDirs)
+
+if (draftFiles.length > 0) {
+  console.log(
+    `\n[narrative drafts] ${draftWarnings} visible-language warning${draftWarnings === 1 ? '' : 's'} across ${draftFiles.length} markdown file${draftFiles.length === 1 ? '' : 's'}`,
+  )
+  for (const { file, findings } of draftFiles) {
+    if (findings.length === 0) continue
+    const rel = relative(repoRoot, file)
+    for (const f of findings) {
+      console.log(`  - ${rel}:${f.line} forbidden term "${f.term}"`)
+    }
+  }
+}
+
+totalWarnings += draftWarnings
+
+console.log(`\nTotal: ${totalWarnings} visible-language warning${totalWarnings === 1 ? '' : 's'} across ${caseDirs.length} case${caseDirs.length === 1 ? '' : 's'} and ${draftFiles.length} draft file${draftFiles.length === 1 ? '' : 's'}.`)
 
 // Always exit 0 — this audit is informational, not a CI gate.
 process.exit(0)
